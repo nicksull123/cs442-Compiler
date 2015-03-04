@@ -67,11 +67,16 @@ EnterName(struct SymTab *ATable,
           const char *Name,
           struct SymEntry **AnEntry)
 {
-    if (FindName(ATable, Name))
+    struct SymEntry *nEntry = FindName(ATable, Name);
+    if (nEntry)
     {
+        if (AnEntry)
+        {
+            *AnEntry = nEntry;
+        }
         return 0;
     }
-    struct SymEntry *nEntry = malloc(sizeof(struct SymEntry));
+    nEntry = malloc(sizeof(struct SymEntry));
     if (AnEntry)
     {
         *AnEntry = nEntry;

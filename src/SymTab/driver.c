@@ -12,7 +12,7 @@ main()
     uint32_t ins = 0;
     struct SymTab *tab = CreateSymTab(100000);
     struct SymEntry *ent = FindName(tab, "test");
-    if(!ent)
+    if (!ent)
     {
         puts("empty find passed");
     }
@@ -21,27 +21,32 @@ main()
         puts("empty find failed");
     }
 
-    char **names = malloc(sizeof(char *) * 10000);
-    for(int i = 0; i < 1000000; i++)
+    struct SymEntry *nEntry;
+    char **names = malloc(sizeof(char *) * 1000000);
+    for (int i = 0; i < 1000000; i++)
     {
         names[i] = malloc(10);
-        for(int j = 0; j < 9; j++)
+        for (int j = 0; j < 9; j++)
         {
-            names[i][j] = rand() % 40 + 48;
+            names[i][j] = rand() % 5 + 48;
         }
         names[i][9] = '\0';
-        if(EnterName(tab, names[i], NULL))
+        if (EnterName(tab, names[i], &nEntry))
         {
             ins++;
         }
+        if (strcmp(names[i], nEntry->Name))
+        {
+            puts("Insert mistmatch");
+        }
     }
 
-    for(int i = 0; i < 1000000; i++)
+    for (int i = 0; i < 1000000; i++)
     {
         ent = FindName(tab, names[i]);
-        if(strcmp(names[i], ent->Name) != 0)
+        if (strcmp(names[i], ent->Name) != 0)
         {
-            printf("%s\n",ent->Name);
+            printf("%s\n", ent->Name);
             puts("Name Mismatch");
             break;
         }
@@ -52,17 +57,17 @@ main()
     {
         puts("full find failed");
     }
-    else 
+    else
     {
         puts("full find passed");
     }
 
     uint32_t freq = 0;
-    for(int i = 0; i < 10000; i++)
+    for (int i = 0; i < 100000; i++)
     {
         int count = 0;
         struct SymEntry *p = tab->Contents[i];
-        while(p)
+        while (p)
         {
             count++;
             p = p->Next;
@@ -75,7 +80,7 @@ main()
 
     uint32_t enumd = 0;
     ent = FirstEntry(tab);
-    while(ent)
+    while (ent)
     {
         ent = NextEntry(tab, ent);
         enumd++;
