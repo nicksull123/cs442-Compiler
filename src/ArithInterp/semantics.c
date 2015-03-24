@@ -9,7 +9,7 @@ printSymTab()
     printf("%20s\t%10s\n", "Variable", "Value");
     while(entry)
     {
-        printf("%20s\t%10d\n", GetName(entry), getVal(GetName(entry)));
+        printf("%20s\t%10d\n", GetName(entry), getVal((char *)GetName(entry)));
         entry = NextEntry(table, entry);
     }
 }
@@ -25,15 +25,17 @@ storeVar(char *name, int32_t v)
 }
 
 int32_t
-getVal(const char *name)
+getVal(char *name)
 {
     struct SymEntry *entry = FindName(table, name);
     if(entry)
     {
         return *((int32_t *)GetAttr(entry));
     }
-    printf("Runtime Error: Variable %s Not Declared\n", name);
-    exit(1);
+    storeVar(name, 0);
+    WriteIndicator(GetCurrentColumn());
+    WriteMessage("Initilize variable to zero");
+    return 0;
 }
 
 int32_t
