@@ -10,7 +10,7 @@
 %}
 
 letter [A-Za-z]  
-digit [0‐9] 
+digit [0-9]
 
 %%
 
