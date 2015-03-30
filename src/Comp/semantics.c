@@ -17,7 +17,6 @@ extern struct SymTab* table;
 
 struct ExprRes* doIntLit( char* digits )
 {
-
     struct ExprRes* res;
 
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
@@ -29,7 +28,6 @@ struct ExprRes* doIntLit( char* digits )
 
 struct ExprRes* doRval( char* name )
 {
-
     struct ExprRes* res;
 
     if ( !FindName( table, name ) )
@@ -44,35 +42,40 @@ struct ExprRes* doRval( char* name )
     return res;
 }
 
-struct ExprRes* doAdd( struct ExprRes* Res1, struct ExprRes* Res2 )
+struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
 {
-
     int reg;
-
+    struct InstrSeq *inst;
     reg = AvailTmpReg();
-    AppendSeq( Res1->Instrs, Res2->Instrs );
-    AppendSeq( Res1->Instrs, GenInstr( NULL, "add",
+    switch( op )
+    {
+        case '+':
+            inst =  GenInstr( NULL, "add",
                                  TmpRegName( reg ),
                                  TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) ) );
-    ReleaseTmpReg( Res1->Reg );
-    ReleaseTmpReg( Res2->Reg );
-    Res1->Reg = reg;
-    free( Res2 );
-    return Res1;
-}
-
-struct ExprRes* doMult( struct ExprRes* Res1, struct ExprRes* Res2 )
-{
-
-    int reg;
-
-    reg = AvailTmpReg();
-    AppendSeq( Res1->Instrs, Res2->Instrs );
-    AppendSeq( Res1->Instrs, GenInstr( NULL, "mul",
+                                 TmpRegName( Res2->Reg ) );
+            break;
+        case '-':
+            inst =  GenInstr( NULL, "sub",
                                  TmpRegName( reg ),
                                  TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) ) );
+                                 TmpRegName( Res2->Reg ) );
+            break;
+        case '*':
+            inst =  GenInstr( NULL, "mul",
+                                 TmpRegName( reg ),
+                                 TmpRegName( Res1->Reg ),
+                                 TmpRegName( Res2->Reg ) );
+            break;
+        case '/':
+            inst =  GenInstr( NULL, "div",
+                                 TmpRegName( reg ),
+                                 TmpRegName( Res1->Reg ),
+                                 TmpRegName( Res2->Reg ) );
+            break;
+    }
+    AppendSeq( Res1->Instrs, Res2->Instrs );
+    AppendSeq( Res1->Instrs, inst);
     ReleaseTmpReg( Res1->Reg );
     ReleaseTmpReg( Res2->Reg );
     Res1->Reg = reg;
@@ -82,7 +85,6 @@ struct ExprRes* doMult( struct ExprRes* Res1, struct ExprRes* Res2 )
 
 struct InstrSeq* doPrint( struct ExprRes* Expr )
 {
-
     struct InstrSeq* code;
 
     code = Expr->Instrs;
@@ -103,7 +105,6 @@ struct InstrSeq* doPrint( struct ExprRes* Expr )
 
 struct InstrSeq* doAssign( char* name, struct ExprRes* Expr )
 {
-
     struct InstrSeq* code;
 
     if ( !FindName( table, name ) )
