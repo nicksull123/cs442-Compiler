@@ -11,6 +11,7 @@
 #include "../IOMngr/IOMngr.h"
 
 extern struct SymTab* table;
+extern struct StrLitList *strList;
 
 /* Semantics support routines */
 
@@ -55,6 +56,26 @@ doBoolLit( int b )
         res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), "0", NULL );
     }
     res->Type = T_BOOL;
+    return res;
+}
+
+struct ExprRes *
+doStrLit( char *str )
+{
+    struct ExprRes *res;
+    struct StrLitList *strEnt;
+    strEnt = malloc(sizeof(struct StrLitList));
+    strEnt->label = GenLabel();
+    strEnt->val = strdup(str);
+    strEnt->next = strList;
+    strList = strEnt;
+    
+    res = (struct ExprRes *)malloc( sizeof( struct ExprRes ) );
+    res->Reg = AvailTmpReg();
+    res->Instrs = GenInstr( NULL, "la", 
+            TmpRegName(res->Reg),
+            strEnt->label, NULL );
+    res->Type = T_STR;
     return res;
 }
 
@@ -238,12 +259,31 @@ doPrintBool( struct ExprRes* Expr )
     return code;
 }
 
+struct InstrSeq *
+doPrintStr( struct ExprRes *Expr )
+{
+    struct InstrSeq *code;
+    code = Expr->Instrs;
+    AppendSeq( code, GenInstr( NULL, "li", "$v0", "4", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "move", "$a0", TmpRegName( Expr->Reg ), NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    ReleaseTmpReg( Expr->Reg );
+    free( Expr );
+    return code;
+}
+
 struct InstrSeq*
 doPrint( struct ExprRes* Expr )
 {
     if ( Expr->Type == T_BOOL )
         return doPrintBool( Expr );
-    return doPrintInt( Expr );
+    if ( Expr->Type == T_INT )
+        return doPrintInt( Expr );
+    if ( Expr->Type == T_STR )
+        return doPrintStr( Expr );
+    
+    typeMismatch();
+    return NULL;
 }
 
 struct InstrSeq *
@@ -373,8 +413,8 @@ doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
             t_label );
         break;
     }
-    AppendSeq( instrs, GenInstr( NULL, "b", f_label, NULL, NULL ) );
 
+    AppendSeq( instrs, GenInstr( NULL, "b", f_label, NULL, NULL ) );
     AppendSeq( instrs, GenInstr( f_label, NULL, NULL, NULL, NULL ) );
     AppendSeq( instrs, GenInstr( NULL, "li", TmpRegName( reg_result ), "0", NULL ) );
     AppendSeq( instrs, GenInstr( NULL, "b", e_label, NULL, NULL ) );
@@ -446,11 +486,39 @@ doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     return Res1;
 }
 
+struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code )
+{
+    if( Expr->Type != T_BOOL )
+    {
+        typeMismatch();
+    }
+
+    char *s_label = GenLabel();
+    char *e_label = GenLabel();
+    struct InstrSeq *nCode;
+
+    nCode = GenInstr( s_label, NULL, NULL, NULL, NULL );
+    AppendSeq( nCode, Expr->Instrs );
+    AppendSeq( nCode, GenInstr( NULL, "beq",
+                TmpRegName(Expr->Reg),
+                "$0",
+                e_label ) );
+    AppendSeq( nCode, code );
+    AppendSeq( nCode, GenInstr( NULL, "b", s_label, NULL, NULL ) );
+    AppendSeq( nCode, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
+    ReleaseTmpReg(Expr->Reg);
+    free( s_label );
+    free( e_label );
+    free( Expr );
+    return nCode;
+}
+
 void Finish( struct InstrSeq* Code )
 {
     struct InstrSeq* code;
     struct SymEntry* entry;
     struct Attr* attr;
+    struct StrLitList *strEnt;
 
     code = GenInstr( NULL, ".text", NULL, NULL, NULL );
     AppendSeq( code, GenInstr( NULL, ".globl", "main", NULL, NULL ) );
@@ -470,6 +538,13 @@ void Finish( struct InstrSeq* Code )
     {
         AppendSeq( code, GenInstr( (char*)GetName( entry ), ".word", "0", NULL, NULL ) );
         entry = NextEntry( table, entry );
+    }
+
+    strEnt = strList;
+    while ( strEnt )
+    {
+        AppendSeq( code, GenInstr( strEnt->label, ".asciiz", strEnt->val, NULL, NULL ) );
+        strEnt = strEnt->next;
     }
 
     WriteSeq( code );

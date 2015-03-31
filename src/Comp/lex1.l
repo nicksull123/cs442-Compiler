@@ -21,11 +21,14 @@ false                           {return False;}
 if                              {return IF;}
 int                             {return Int;}
 bool                            {return Bool;}
+while                           {return While;};
 print                           {return Write;}
 println                         {return Writeln;}
 printsp                         {return Writesp;}
+read                            {return Read;};
 {letter}({letter}|{digit})*     {return Ident;}
 {digit}{digit}*                 {return IntLit;}
+\"(\\.|[^"\\])*\"               {return Str;}
 \=\=                            {return EQ;}
 \<                              {return LT;}
 \<\=                            {return LTE;}

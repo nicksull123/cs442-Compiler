@@ -46,6 +46,7 @@ extern struct SymEntry *entry;
 %token IntLit   
 %token Int
 %token Bool
+%token Str
 %token NOT
 %token OR
 %token AND
@@ -54,6 +55,8 @@ extern struct SymEntry *entry;
 %token Write
 %token Writeln
 %token Writesp
+%token Read
+%token While
 %token IF
 %token EQ   
 %token LT
@@ -71,6 +74,7 @@ Dec             :   Int Ident                               {doDeclare(yytext, T
 Dec             :   Bool Ident                              {doDeclare(yytext, T_BOOL); } ';' {};
 StmtSeq         :   Stmt StmtSeq                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                           {$$ = NULL; };
+Stmt            :   While '(' AExpr ')' '{' StmtSeq '}'     {$$ = doWhile($3, $6); };
 Stmt            :   Writesp '(' AExpr ')' ';'               {$$ = doPrintSp($3);};
 Stmt            :   Writeln ';'                             {$$ = doPrintLn();};
 Stmt            :   Write '(' PVarSeq ')' ';'               {$$ = $3;};
@@ -106,6 +110,7 @@ Factor          :   '(' AExpr ')'                           {$$ = $2; };
 Factor          :   NOT AExpr                               {$$ = doNot($2);};
 Factor          :   True                                    {$$ = doBoolLit(B_TRUE);};
 Factor          :   False                                   {$$ = doBoolLit(B_FALSE);};
+Factor          :   Str                                     {$$ = doStrLit(yytext);};
 Id              :   Ident                                   {$$ = strdup(yytext); };
  
 %%

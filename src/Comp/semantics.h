@@ -5,6 +5,7 @@
 /* Semantic Defines */
 #define T_BOOL 0
 #define T_INT 1
+#define T_STR 2
 
 #define B_LT 0
 #define B_LTE 1
@@ -38,10 +39,18 @@ struct ExprResList
     struct ExprResList* Next;
 };
 
+struct StrLitList
+{
+    char *label;
+    char *val;
+    struct StrLitList *next;
+};
+
 /* Semantics Actions */
 void doDeclare(char *name, int type);
 struct ExprRes* doIntLit( char* digits );
 struct ExprRes *doBoolLit( int b );
+struct ExprRes *doStrLit( char *str );
 struct ExprRes* doRval( char* name );
 struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
 struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
@@ -54,5 +63,6 @@ struct InstrSeq *doPrintSp( struct ExprRes *Expr );
 struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
 struct ExprRes *doNot( struct ExprRes *Expr );
 struct ExprRes *doBoolOp( struct ExprRes *Res1, struct ExprRes *Res2, int op );
+struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
 
 void Finish( struct InstrSeq* Code );

@@ -9,12 +9,15 @@ extern int yyparse();
 struct SymTab* table;
 struct SymTab* ProcSymTab;
 struct SymEntry* entry;
+struct StrLitList *strList;
+
 int inProc = 0;
 FILE* aFile;
 
 int main(int argc, char* argv[])
 {
     table = CreateSymTab(33);
+    strList = NULL;
     OpenFiles(argv[1], NULL);
     if (argc == 3)
         aFile = fopen(argv[2], "w");
