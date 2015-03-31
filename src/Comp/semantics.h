@@ -67,6 +67,8 @@ struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq *doPrintLn();
 struct InstrSeq *doPrintSp( struct ExprRes *Expr );
 struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
+struct InstrSeq *doRead( char *var );
+struct InstrSeq *doReadList( char *var, struct InstrSeq *code );
 void Finish( struct InstrSeq* Code );
 
 /* Bool Semantics Actions */

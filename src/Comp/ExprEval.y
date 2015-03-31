@@ -7,18 +7,19 @@
 #include "semantics.h"
 #include "codegen.h"
 
-extern int yylex(); /* The next token function. */
+int yylex(); /* The next token function. */
+int yyerror(const char *);
+void dumpTable();
 extern char *yytext;   /* The matched token text.  */
 extern int yyleng;      /* The token text length.   */
 extern int yyparse();
-extern int yyerror(char *);
-void dumpTable();
 
 extern struct SymTab *table;
 extern struct SymEntry *entry;
 
 %}
 
+%glr-parser
 
 %union {
   long val;
@@ -41,6 +42,7 @@ extern struct SymEntry *entry;
 %type <ExprRes> OExpr
 %type <ExprRes> AExpr
 %type <InstrSeq> PVarSeq
+%type <InstrSeq> RVarSeq
 
 %token Ident        
 %token IntLit   
@@ -75,10 +77,13 @@ Dec             :   Bool Ident                              {doDeclare(yytext, T
 StmtSeq         :   Stmt StmtSeq                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                           {$$ = NULL; };
 Stmt            :   While '(' AExpr ')' '{' StmtSeq '}'     {$$ = doWhile($3, $6); };
+Stmt            :   Read '(' RVarSeq ')' ';'                {$$ = $3;};
 Stmt            :   Writesp '(' AExpr ')' ';'               {$$ = doPrintSp($3);};
 Stmt            :   Writeln ';'                             {$$ = doPrintLn();};
 Stmt            :   Write '(' PVarSeq ')' ';'               {$$ = $3;};
 Stmt            :   Id '=' AExpr ';'                        {$$ = doAssign($1, $3); };
+RVarSeq         :   Id ',' RVarSeq                          {$$ = doReadList($1, $3);};
+RVarSeq         :   Id                                      {$$ = doRead($1);};
 PVarSeq         :   AExpr ',' PVarSeq                       {$$ = doPrintList($1, $3);};
 PVarSeq         :   AExpr                                   {$$ = doPrint($1);};
 AExpr           :   AExpr AND OExpr                         {$$ = doBoolOp($1, $3, B_AND); };
@@ -115,7 +120,7 @@ Id              :   Ident                                   {$$ = strdup(yytext)
  
 %%
 
-int yyerror(char *s)  {
+int yyerror(const char *s)  {
   WriteIndicator(GetCurrentColumn());
   WriteMessage("Illegal Character in YACC");
   return 1;

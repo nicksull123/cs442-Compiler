@@ -21,7 +21,6 @@ void doDeclare( char* name, int type )
     SetAttr( ent, (void*)type );
 }
 
-
 struct ExprRes*
 doRval( char* name )
 {
@@ -179,7 +178,34 @@ doWhile( struct ExprRes *Expr, struct InstrSeq *code )
     return nCode;
 }
 
-void Finish( struct InstrSeq* Code )
+struct InstrSeq *
+doReadList( char *var, struct InstrSeq *code)
+{
+    struct InstrSeq *instrs;
+    instrs = doRead( var );
+    AppendSeq(instrs, code);
+    return instrs;
+}
+
+struct InstrSeq *
+doRead( char *var )
+{
+    if( !FindName(table, var) )
+    {
+        WriteIndicator( GetCurrentColumn() );
+        WriteMessage( "Undeclared variable" );
+        exit( 1 );
+    }
+
+    struct InstrSeq *code;
+    code = GenInstr( NULL, "li", "$v0", "5", NULL );
+    AppendSeq(code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq(code, GenInstr( NULL, "sw", "$v0", var, NULL ) );
+    return code;
+}
+
+void 
+Finish( struct InstrSeq* Code )
 {
     struct InstrSeq* code;
     struct SymEntry* entry;
