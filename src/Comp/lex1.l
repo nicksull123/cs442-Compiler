@@ -18,39 +18,39 @@ digit [0-9]
 %%
 true                            {return True;}
 false                           {return False;}
-if					            {return IF;}
-int					            {return Int;}
+if                              {return IF;}
+int                             {return Int;}
 bool                            {return Bool;}
-print					        {return Write;}
-{letter}({letter}|{digit})*	    {return Ident;}
-{digit}{digit}*		            {return IntLit;}
-\=\=					        {return EQ;}
+print                           {return Write;}
+{letter}({letter}|{digit})*     {return Ident;}
+{digit}{digit}*                 {return IntLit;}
+\=\=                            {return EQ;}
 \<                              {return LT;}
 \<\=                            {return LTE;}
 \>                              {return GT;}
 \>\=                            {return GTE;}
 \!\=                            {return NE;}
-\=					            {return '=';}
-\+					            {return '+';}
+\=                              {return '=';}
+\+                              {return '+';}
 \-                              {return '-';}
-\*					            {return '*';}
+\*                              {return '*';}
 \/                              {return '/';}
 \%                              {return '%';}
 \^                              {return '^';}
-\;					            {return ';';}
-\{					            {return '{';}
-\}					            {return '}';}
-\(					            {return '(';}
-\)					            {return ')';}
+\;                              {return ';';}
+\{                              {return '{';}
+\}                              {return '}';}
+\(                              {return '(';}
+\)                              {return ')';}
 
-[ ]				                {}
-\t				                {}
-\r				                {}
-\n				                {}
+[ ]                             {}
+\t                              {}
+\r                              {}
+\n                              {}
 
-.				                {
+.                               {
                                     WriteIndicator(GetCurrentColumn());
-				                    WriteMessage("Illegal Character in lex");
+                                    WriteMessage("Illegal Character in lex");
                                 }
 
 %%
@@ -59,5 +59,5 @@ int
 yywrap () {
     return 1;
 }
-			
-	
+            
+    
