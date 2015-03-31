@@ -9,7 +9,7 @@ ODIR=../../bin/Comp
 LIBS=
 OLINK=SymTab.o IOMngr.o
 DEPS=semantics.h ExprEval.y lex1.l
-_OBJ=main.o semantics.o y.tab.o lex.yy.o codegen.o
+_OBJ=main.o semantics.o y.tab.o lex.yy.o codegen.o semantics_bool.o semantics_int.o semantics_str.o
 
 OBJ=$(patsubst %, $(ODIR)/%, $(_OBJ))
 

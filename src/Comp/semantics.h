@@ -2,6 +2,17 @@
    The action and supporting routines for performing semantics processing.
 */
 
+#pragma once
+
+#include <strings.h>
+#include <stdlib.h>
+#include "codegen.h"
+#include "../SymTab/SymTab.h"
+#include "../IOMngr/IOMngr.h"
+
+extern struct SymTab* table;
+extern struct StrLitList *strList;
+
 /* Semantic Defines */
 #define T_BOOL 0
 #define T_INT 1
@@ -48,21 +59,30 @@ struct StrLitList
 
 /* Semantics Actions */
 void doDeclare(char *name, int type);
-struct ExprRes* doIntLit( char* digits );
-struct ExprRes *doBoolLit( int b );
-struct ExprRes *doStrLit( char *str );
+void typeMismatch();
 struct ExprRes* doRval( char* name );
 struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
-struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
-struct ExprRes *doNegate( struct ExprRes *Expr );
-struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
 struct InstrSeq *doPrintList(struct ExprRes *Res1, struct InstrSeq *instrs2);
 struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq *doPrintLn();
 struct InstrSeq *doPrintSp( struct ExprRes *Expr );
-struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
+void Finish( struct InstrSeq* Code );
+
+/* Bool Semantics Actions */
+struct ExprRes *doBoolLit( int b );
 struct ExprRes *doNot( struct ExprRes *Expr );
 struct ExprRes *doBoolOp( struct ExprRes *Res1, struct ExprRes *Res2, int op );
-struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
+struct InstrSeq* doPrintBool( struct ExprRes* Expr );
 
-void Finish( struct InstrSeq* Code );
+/* Int Semantics Actions */
+struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
+struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
+struct ExprRes* doIntLit( char* digits );
+struct ExprRes *doNegate( struct ExprRes *Expr );
+struct InstrSeq* doPrintInt( struct ExprRes* Expr );
+
+/* Str Semantics Actions */
+struct InstrSeq *doPrintStr( struct ExprRes *Expr );
+struct ExprRes *doStrLit( char *str );

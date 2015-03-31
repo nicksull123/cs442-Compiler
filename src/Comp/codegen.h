@@ -1,7 +1,8 @@
 /* CodeGen.h
    Routines to support the generation of assembly code.
-   
 */
+
+#pragma once 
 
 #include <stdio.h>
 
