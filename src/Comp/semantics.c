@@ -247,7 +247,7 @@ doAssign( char* name, struct ExprRes* Expr )
 }
 
 struct ExprRes*
-doBExpr( struct ExprRes* Res1, struct ExprRes* Res2, int op )
+doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
 {
     if ( Res1->Type != T_INT || Res2->Type != T_INT )
     {
@@ -323,6 +323,57 @@ doBExpr( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     free( Res2 );
     Res1->Reg = reg_result;
     Res1->Type = T_BOOL;
+    return Res1;
+}
+
+struct ExprRes*
+doNot( struct ExprRes* Expr )
+{
+    if ( Expr->Type != T_BOOL )
+    {
+        typeMismatch();
+    }
+
+    int reg_one = AvailTmpReg();
+    struct InstrSeq* instrs;
+    instrs = GenInstr( NULL, "addi", TmpRegName( reg_one ), "$0", "1" );
+    AppendSeq( instrs, GenInstr( NULL, "xor",
+                           TmpRegName( Expr->Reg ),
+                           TmpRegName( reg_one ),
+                           TmpRegName( Expr->Reg ) ) );
+    AppendSeq( Expr->Instrs, instrs );
+    ReleaseTmpReg( reg_one );
+    return Expr;
+}
+
+struct ExprRes*
+doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
+{
+    if ( Res1->Type != T_BOOL || Res2->Type != T_BOOL )
+    {
+        typeMismatch();
+    }
+    
+    char *opc;
+    switch (op)
+    {
+    case B_OR:
+        opc = "or";
+        break;
+    case B_AND:
+        opc = "and";
+        break;
+    }
+
+    struct InstrSeq* instrs;
+    instrs = GenInstr( NULL, opc,
+        TmpRegName( Res1->Reg ),
+        TmpRegName( Res1->Reg ),
+        TmpRegName( Res2->Reg ) );
+    AppendSeq( Res1->Instrs, Res2->Instrs );
+    AppendSeq( Res1->Instrs, instrs );
+    ReleaseTmpReg( Res2->Reg );
+    free( Res2 );
     return Res1;
 }
 

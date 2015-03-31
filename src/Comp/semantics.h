@@ -12,6 +12,8 @@
 #define B_GTE 3
 #define B_NE 4
 #define B_EQ 5
+#define B_OR 6
+#define B_AND 7
 
 #define B_TRUE 1
 #define B_FALSE 0
@@ -46,6 +48,8 @@ struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
 struct ExprRes *doNegate( struct ExprRes *Expr );
 struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
 struct InstrSeq* doPrint( struct ExprRes* Expr );
-struct ExprRes* doBExpr( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct ExprRes *doNot( struct ExprRes *Expr );
+struct ExprRes *doBoolOp( struct ExprRes *Res1, struct ExprRes *Res2, int op );
 
 void Finish( struct InstrSeq* Code );

@@ -30,6 +30,9 @@ print                           {return Write;}
 \>                              {return GT;}
 \>\=                            {return GTE;}
 \!\=                            {return NE;}
+\!                              {return NOT;}
+\|\|                            {return OR;};
+\&\&                            {return AND;};
 \=                              {return '=';}
 \+                              {return '+';}
 \-                              {return '-';}

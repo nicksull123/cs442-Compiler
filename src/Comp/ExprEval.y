@@ -37,13 +37,17 @@ extern struct SymEntry *entry;
 %type <InstrSeq> StmtSeq
 %type <InstrSeq> Stmt
 %type <ExprRes> BExpr
-%type <ExprRes> BBExpr
-%type <ExprRes> VExpr
+%type <ExprRes> BHExpr
+%type <ExprRes> OExpr
+%type <ExprRes> AExpr
 
 %token Ident        
 %token IntLit   
 %token Int
 %token Bool
+%token NOT
+%token OR
+%token AND
 %token True
 %token False
 %token Write
@@ -64,22 +68,20 @@ Dec             :   Int Ident                               {doDeclare(yytext, T
 Dec             :   Bool Ident                              {doDeclare(yytext, T_BOOL); } ';' {};
 StmtSeq         :   Stmt StmtSeq                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                           {$$ = NULL; };
-Stmt            :   Write VExpr ';'                         {$$ = doPrint($2); };
-Stmt            :   Id '=' VExpr ';'                        {$$ = doAssign($1, $3); };
-VExpr           :   BBExpr                                  {$$ = $1;};
-VExpr           :   Expr                                    {$$ = $1;};
-//Stmt          :   IF '(' BExpr ')' '{' StmtSeq '}'        {$$ = doIf($3, $6); };
-BBExpr          :   BExpr                                   {$$ = $1;};
-BBExpr          :   True                                    {$$ = doBoolLit(B_TRUE);};
-BBExpr          :   False                                   {$$ = doBoolLit(B_FALSE);};
-BBExpr          :   Id                                      {$$ = doRval(yytext);};
-BExpr           :   Expr EQ Expr                            {$$ = doBExpr($1, $3, B_EQ);};
-BExpr           :   Expr LT Expr                            {$$ = doBExpr($1, $3, B_LT);};
-BExpr           :   Expr LTE Expr                           {$$ = doBExpr($1, $3, B_LTE);};
-BExpr           :   Expr GT Expr                            {$$ = doBExpr($1, $3, B_GT);};
-BExpr           :   Expr GTE Expr                           {$$ = doBExpr($1, $3, B_GTE);};
-BExpr           :   Expr NE Expr                            {$$ = doBExpr($1, $3, B_NE);};
-BExpr           :   '(' BBExpr ')'                          {$$ = $2;};
+Stmt            :   Write AExpr ';'                         {$$ = doPrint($2); };
+Stmt            :   Id '=' AExpr ';'                        {$$ = doAssign($1, $3); };
+AExpr           :   AExpr AND OExpr                         {$$ = doBoolOp($1, $3, B_AND); };
+AExpr           :   OExpr                                   {$$ = $1;};
+OExpr           :   OExpr OR BHExpr                         {$$ = doBoolOp($1, $3, B_OR); };
+OExpr           :   BHExpr                                  {$$ = $1;};
+BHExpr          :   BHExpr EQ BExpr                         {$$ = doComp($1, $3, B_EQ);};
+BHExpr          :   BHExpr NE BExpr                         {$$ = doComp($1, $3, B_NE);};
+BHExpr          :   BExpr                                   {$$ = $1;};
+BExpr           :   BExpr LT Expr                           {$$ = doComp($1, $3, B_LT);};
+BExpr           :   BExpr LTE Expr                          {$$ = doComp($1, $3, B_LTE);};
+BExpr           :   BExpr GT Expr                           {$$ = doComp($1, $3, B_GT);};
+BExpr           :   BExpr GTE Expr                          {$$ = doComp($1, $3, B_GTE);};
+BExpr           :   Expr                                    {$$ = $1;};
 Expr            :   Expr '+' Term                           {$$ = doArith($1, $3, '+'); };
 Expr            :   Expr '-' Term                           {$$ = doArith($1, $3, '-'); };
 Expr            :   Term                                    {$$ = $1; };
@@ -93,7 +95,10 @@ NTerm           :   '-' Factor                              {$$ = doNegate($2); 
 NTerm           :   Factor                                  {$$ = $1; };
 Factor          :   IntLit                                  {$$ = doIntLit(yytext); };
 Factor          :   Ident                                   {$$ = doRval(yytext); };
-Factor          :   '(' Expr ')'                            {$$ = $2; };
+Factor          :   '(' AExpr ')'                           {$$ = $2; };
+Factor          :   NOT AExpr                               {$$ = doNot($2);};
+Factor          :   True                                    {$$ = doBoolLit(B_TRUE);};
+Factor          :   False                                   {$$ = doBoolLit(B_FALSE);};
 Id              :   Ident                                   {$$ = strdup(yytext); };
  
 %%
