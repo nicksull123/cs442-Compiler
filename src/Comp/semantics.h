@@ -2,6 +2,14 @@
    The action and supporting routines for performing semantics processing.
 */
 
+/* Semantic Defines */
+#define B_LT 0
+#define B_LTE 1
+#define B_GT 2
+#define B_GTE 3
+#define B_NE 4
+#define B_EQ 5
+
 /* Semantic Records */
 struct IdList
 {
@@ -23,18 +31,19 @@ struct ExprResList
 
 struct BExprRes
 {
-    char* Label;
+    int Reg;
     struct InstrSeq* Instrs;
 };
 
 /* Semantics Actions */
-extern struct ExprRes* doIntLit( char* digits );
-extern struct ExprRes* doRval( char* name );
-extern struct InstrSeq* doAssign( char* name, struct ExprRes* Res1 );
-extern struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
-extern struct ExprRes* doMult( struct ExprRes* Res1, struct ExprRes* Res2 );
-extern struct InstrSeq* doPrint( struct ExprRes* Expr );
-extern struct BExprRes* doBExpr( struct ExprRes* Res1, struct ExprRes* Res2 );
-extern struct InstrSeq* doIf( struct BExprRes* bRes, struct InstrSeq* seq );
+struct ExprRes* doIntLit( char* digits );
+struct ExprRes* doRval( char* name );
+struct InstrSeq* doAssign( char* name, struct ExprRes* Res1 );
+struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
+struct ExprRes *doNegate( struct ExprRes *Expr );
+struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
+struct InstrSeq* doPrint( struct ExprRes* Expr );
+struct BExprRes* doBExpr( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct InstrSeq* doIf( struct BExprRes* bRes, struct InstrSeq* seq );
 
-extern void Finish( struct InstrSeq* Code );
+void Finish( struct InstrSeq* Code );

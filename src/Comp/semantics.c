@@ -1,6 +1,5 @@
 /* Semantics.c
    Support and semantic action routines.
-   
 */
 
 #include <strings.h>
@@ -15,7 +14,8 @@ extern struct SymTab* table;
 
 /* Semantics support routines */
 
-struct ExprRes* doIntLit( char* digits )
+struct ExprRes*
+doIntLit( char* digits )
 {
     struct ExprRes* res;
 
@@ -26,7 +26,8 @@ struct ExprRes* doIntLit( char* digits )
     return res;
 }
 
-struct ExprRes* doRval( char* name )
+struct ExprRes*
+doRval( char* name )
 {
     struct ExprRes* res;
 
@@ -38,44 +39,89 @@ struct ExprRes* doRval( char* name )
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Instrs = GenInstr( NULL, "lw", TmpRegName( res->Reg ), name, NULL );
-
     return res;
 }
 
-struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
+struct ExprRes*
+doNegate( struct ExprRes* Expr )
 {
-    int reg;
-    struct InstrSeq *inst;
-    reg = AvailTmpReg();
-    switch( op )
+    struct InstrSeq* inst;
+    int reg = AvailTmpReg();
+    inst = GenInstr( NULL, "sub", 
+            TmpRegName( reg ), 
+            "$0", 
+            TmpRegName( Expr->Reg ) );
+    AppendSeq( Expr->Instrs, inst );
+    ReleaseTmpReg( Expr->Reg );
+    Expr->Reg = reg;
+    return Expr;
+}
+
+struct ExprRes *
+doPow( struct ExprRes *base, struct ExprRes *pow)
+{
+    struct InstrSeq *instrs;
+    int reg_pow = AvailTmpReg();
+    int reg_cur = AvailTmpReg();
+    char *s_label = GenLabel();
+    char *e_label = GenLabel();
+
+    instrs = GenInstr( NULL, "move", TmpRegName( reg_pow ), "$0", NULL );
+    AppendSeq(instrs, GenInstr( NULL, "addi", TmpRegName( reg_cur ), "$0", "1" ) );
+    AppendSeq(instrs, GenInstr( NULL, "beq", TmpRegName( pow->Reg ), "$0", e_label) );
+    AppendSeq(instrs, GenInstr( s_label, NULL, NULL, NULL, NULL ) );
+    AppendSeq(instrs, GenInstr( NULL, "mul", TmpRegName( reg_cur ),
+                        TmpRegName( reg_cur ),
+                        TmpRegName( base->Reg) ) );
+    AppendSeq(instrs, GenInstr( NULL, "addi", TmpRegName( reg_pow ),
+                        TmpRegName( reg_pow ), 
+                        "1") );
+    AppendSeq(instrs, GenInstr( NULL, "blt", TmpRegName( reg_pow ), 
+                TmpRegName(pow->Reg), s_label ) );
+    AppendSeq(instrs, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
+
+    AppendSeq(base->Instrs, pow->Instrs);
+    AppendSeq(base->Instrs, instrs);
+    ReleaseTmpReg(base->Reg);
+    ReleaseTmpReg(pow->Reg);
+    ReleaseTmpReg(reg_pow);
+    base->Reg = reg_cur;
+    free( s_label );
+    free( e_label );
+    free( pow );
+    return base;
+}
+
+struct ExprRes*
+doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
+{
+    int reg = AvailTmpReg();
+    char *opc;
+
+    switch ( op )
     {
-        case '+':
-            inst =  GenInstr( NULL, "add",
-                                 TmpRegName( reg ),
-                                 TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) );
-            break;
-        case '-':
-            inst =  GenInstr( NULL, "sub",
-                                 TmpRegName( reg ),
-                                 TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) );
-            break;
-        case '*':
-            inst =  GenInstr( NULL, "mul",
-                                 TmpRegName( reg ),
-                                 TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) );
-            break;
-        case '/':
-            inst =  GenInstr( NULL, "div",
-                                 TmpRegName( reg ),
-                                 TmpRegName( Res1->Reg ),
-                                 TmpRegName( Res2->Reg ) );
-            break;
+    case '+':
+        opc = "add";
+        break;
+    case '-':
+        opc = "sub";
+        break;
+    case '*':
+        opc = "mul";
+        break;
+    case '/':
+        opc = "div";
+        break;
+    case '%':
+        opc = "rem";
+        break;
     }
+
     AppendSeq( Res1->Instrs, Res2->Instrs );
-    AppendSeq( Res1->Instrs, inst);
+    AppendSeq( Res1->Instrs, GenInstr( NULL, opc,
+                                TmpRegName( reg ),
+                                TmpRegName( Res1->Reg ),
+                                TmpRegName( Res2->Reg ) ) );
     ReleaseTmpReg( Res1->Reg );
     ReleaseTmpReg( Res2->Reg );
     Res1->Reg = reg;
@@ -83,7 +129,8 @@ struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
     return Res1;
 }
 
-struct InstrSeq* doPrint( struct ExprRes* Expr )
+struct InstrSeq*
+doPrint( struct ExprRes* Expr )
 {
     struct InstrSeq* code;
 
@@ -103,7 +150,8 @@ struct InstrSeq* doPrint( struct ExprRes* Expr )
     return code;
 }
 
-struct InstrSeq* doAssign( char* name, struct ExprRes* Expr )
+struct InstrSeq*
+doAssign( char* name, struct ExprRes* Expr )
 {
     struct InstrSeq* code;
 
@@ -123,7 +171,8 @@ struct InstrSeq* doAssign( char* name, struct ExprRes* Expr )
     return code;
 }
 
-extern struct BExprRes* doBExpr( struct ExprRes* Res1, struct ExprRes* Res2 )
+/*struct BExprRes*
+doBExpr( struct ExprRes* Res1, struct ExprRes* Res2, int op )
 {
     struct BExprRes* bRes;
     AppendSeq( Res1->Instrs, Res2->Instrs );
@@ -138,7 +187,8 @@ extern struct BExprRes* doBExpr( struct ExprRes* Res1, struct ExprRes* Res2 )
     return bRes;
 }
 
-extern struct InstrSeq* doIf( struct BExprRes* bRes, struct InstrSeq* seq )
+struct InstrSeq*
+doIf( struct BExprRes* bRes, struct InstrSeq* seq )
 {
     struct InstrSeq* seq2;
     seq2 = AppendSeq( bRes->Instrs, seq );
@@ -146,6 +196,8 @@ extern struct InstrSeq* doIf( struct BExprRes* bRes, struct InstrSeq* seq )
     free( bRes );
     return seq2;
 }
+
+*/
 
 /*
 
@@ -163,8 +215,8 @@ extern struct InstrSeq * doIf(struct ExprRes *res1, struct ExprRes *res2, struct
 	free(res2);
 	return seq2;
 }
-
 */
+
 void Finish( struct InstrSeq* Code )
 {
     struct InstrSeq* code;
