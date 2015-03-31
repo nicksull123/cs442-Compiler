@@ -16,8 +16,11 @@ letter [A-Za-z]
 digit [0-9]
 
 %%
+true                            {return True;}
+false                           {return False;}
 if					            {return IF;}
 int					            {return Int;}
+bool                            {return Bool;}
 print					        {return Write;}
 {letter}({letter}|{digit})*	    {return Ident;}
 {digit}{digit}*		            {return IntLit;}

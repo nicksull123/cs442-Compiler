@@ -15,10 +15,9 @@ FILE* aFile;
 int main(int argc, char* argv[])
 {
     table = CreateSymTab(33);
-    // assumes there is a listing file
-    OpenFiles(argv[1], argv[2]);
-    if (argc == 4)
-        aFile = fopen(argv[3], "w");
+    OpenFiles(argv[1], NULL);
+    if (argc == 3)
+        aFile = fopen(argv[2], "w");
     else
         aFile = stdout;
 

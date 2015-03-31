@@ -14,15 +14,40 @@ extern struct SymTab* table;
 
 /* Semantics support routines */
 
+void
+doDeclare( char *name, int type )
+{
+    struct SymEntry *ent;
+    EnterName(table, name, &ent);
+    SetAttr(ent, (void *)type);
+}
+
 struct ExprRes*
 doIntLit( char* digits )
 {
     struct ExprRes* res;
-
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), digits, NULL );
+    res->Type = T_INT;
+    return res;
+}
 
+struct ExprRes *
+doBoolLit( int b )
+{
+    struct ExprRes *res;
+    res = (struct ExprRes *)malloc( sizeof( struct ExprRes ) );
+    res->Reg = AvailTmpReg();
+    if ( b )
+    {
+        res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), "1", NULL );
+    }
+    else
+    {
+        res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), "0", NULL );
+    }
+    res->Type = T_BOOL;
     return res;
 }
 
@@ -30,15 +55,17 @@ struct ExprRes*
 doRval( char* name )
 {
     struct ExprRes* res;
-
-    if ( !FindName( table, name ) )
+    struct SymEntry *ent = FindName( table, name );
+    if ( !ent )
     {
         WriteIndicator( GetCurrentColumn() );
         WriteMessage( "Undeclared variable" );
+        exit(1);
     }
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Instrs = GenInstr( NULL, "lw", TmpRegName( res->Reg ), name, NULL );
+    res->Type = (int)GetAttr(ent);
     return res;
 }
 
@@ -130,7 +157,7 @@ doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
 }
 
 struct InstrSeq*
-doPrint( struct ExprRes* Expr )
+doPrintInt( struct ExprRes* Expr )
 {
     struct InstrSeq* code;
 
@@ -150,25 +177,78 @@ doPrint( struct ExprRes* Expr )
     return code;
 }
 
+struct InstrSeq *
+doPrintBool( struct ExprRes *Expr )
+{
+    struct InstrSeq *code;
+    char *e_label = GenLabel();
+    char *f_label = GenLabel();
+    code = Expr->Instrs;
+    AppendSeq( code, GenInstr( NULL, "li", "$v0", "4", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "beq", TmpRegName( Expr->Reg ), "$0", f_label ) );
+    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_true", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq( code, GenInstr( NULL, "b", e_label, NULL, NULL ) );
+    AppendSeq( code, GenInstr( f_label, NULL, NULL, NULL, NULL ) );
+    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_false", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq( code, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
+    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_nl", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    ReleaseTmpReg( Expr->Reg );
+    free( Expr );
+    free( e_label );
+    free( f_label );
+    return code;
+}
+
+struct InstrSeq *
+doPrint( struct ExprRes *Expr )
+{
+    if (Expr->Type == T_BOOL)
+        return doPrintBool(Expr);
+    return doPrintInt(Expr);
+}
+
 struct InstrSeq*
-doAssign( char* name, struct ExprRes* Expr )
+doAssign( char* name, struct ExprRes *Expr )
 {
     struct InstrSeq* code;
-
-    if ( !FindName( table, name ) )
+    struct SymEntry *ent = FindName( table, name );
+    if ( !ent )
     {
         WriteIndicator( GetCurrentColumn() );
         WriteMessage( "Undeclared variable" );
+        exit(1);
     }
-
+    if ((int)GetAttr(ent) != Expr->Type)
+    {
+        WriteIndicator( GetCurrentColumn() );
+        WriteMessage( "Type mismatch" );
+        exit(1);
+    }
     code = Expr->Instrs;
-
     AppendSeq( code, GenInstr( NULL, "sw", TmpRegName( Expr->Reg ), name, NULL ) );
-
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
-
     return code;
+}
+
+struct ExprRes *
+doBExpr( struct ExprRes *Res1, struct ExprRes *Res2, int op )
+{
+    struct InstrSeq *instrs;
+    int reg_result = AvailTmpReg();
+
+    puts("FUCK FUCK FUCK");
+    AppendSeq( Res1->Instrs, Res2->Instrs );
+    AppendSeq( Res1->Instrs, instrs );
+    ReleaseTmpReg( Res1->Reg );
+    ReleaseTmpReg( Res2->Reg );
+    free( Res2 );
+    Res1->Reg = reg_result;
+    Res1->Type = T_BOOL;
+    return Res1;
 }
 
 /*struct BExprRes*
@@ -202,18 +282,18 @@ doIf( struct BExprRes* bRes, struct InstrSeq* seq )
 /*
 
 extern struct InstrSeq * doIf(struct ExprRes *res1, struct ExprRes *res2, struct InstrSeq * seq) {
-	struct InstrSeq *seq2;
-	char * label;
-	label = GenLabel();
-	AppendSeq(res1->Instrs, res2->Instrs);
-	AppendSeq(res1->Instrs, GenInstr(NULL, "bne", TmpRegName(res1->Reg), TmpRegName(res2->Reg), label));
-	seq2 = AppendSeq(res1->Instrs, seq);
-	AppendSeq(seq2, GenInstr(label, NULL, NULL, NULL, NULL));
-	ReleaseTmpReg(res1->Reg);
-  	ReleaseTmpReg(res2->Reg);
-	free(res1);
-	free(res2);
-	return seq2;
+    struct InstrSeq *seq2;
+    char * label;
+    label = GenLabel();
+    AppendSeq(res1->Instrs, res2->Instrs);
+    AppendSeq(res1->Instrs, GenInstr(NULL, "bne", TmpRegName(res1->Reg), TmpRegName(res2->Reg), label));
+    seq2 = AppendSeq(res1->Instrs, seq);
+    AppendSeq(seq2, GenInstr(label, NULL, NULL, NULL, NULL));
+    ReleaseTmpReg(res1->Reg);
+    ReleaseTmpReg(res2->Reg);
+    free(res1);
+    free(res2);
+    return seq2;
 }
 */
 
@@ -232,6 +312,8 @@ void Finish( struct InstrSeq* Code )
     AppendSeq( code, GenInstr( NULL, ".data", NULL, NULL, NULL ) );
     AppendSeq( code, GenInstr( NULL, ".align", "4", NULL, NULL ) );
     AppendSeq( code, GenInstr( "_nl", ".asciiz", "\"\\n\"", NULL, NULL ) );
+    AppendSeq( code, GenInstr( "_true", ".asciiz", "\"true\"", NULL, NULL ) );
+    AppendSeq( code, GenInstr( "_false", ".asciiz", "\"false\"", NULL, NULL ) );
 
     entry = FirstEntry( table );
     while ( entry )
