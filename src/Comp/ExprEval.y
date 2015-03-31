@@ -79,6 +79,7 @@ BExpr           :   Expr LTE Expr                           {$$ = doBExpr($1, $3
 BExpr           :   Expr GT Expr                            {$$ = doBExpr($1, $3, B_GT);};
 BExpr           :   Expr GTE Expr                           {$$ = doBExpr($1, $3, B_GTE);};
 BExpr           :   Expr NE Expr                            {$$ = doBExpr($1, $3, B_NE);};
+BExpr           :   '(' BBExpr ')'                          {$$ = $2;};
 Expr            :   Expr '+' Term                           {$$ = doArith($1, $3, '+'); };
 Expr            :   Expr '-' Term                           {$$ = doArith($1, $3, '-'); };
 Expr            :   Term                                    {$$ = $1; };
