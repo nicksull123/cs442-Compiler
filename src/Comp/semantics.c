@@ -246,6 +246,50 @@ doPrint( struct ExprRes* Expr )
     return doPrintInt( Expr );
 }
 
+struct InstrSeq *
+doPrintSp( struct ExprRes *Expr )
+{
+    if (Expr->Type != T_INT)
+    {
+        typeMismatch();
+    }
+
+    struct InstrSeq *code;
+    int reg_count = AvailTmpReg();
+    int reg_one = AvailTmpReg();
+    char *s_label = GenLabel();
+    char *e_label = GenLabel();
+    code = Expr->Instrs;
+    AppendSeq( code, GenInstr( NULL, "addi", 
+                TmpRegName( reg_one ), 
+                "$0", "1" ) );
+    AppendSeq( code, GenInstr( NULL, "blt", 
+                TmpRegName( Expr->Reg ),
+                TmpRegName( reg_one ),
+                e_label ) );
+    AppendSeq( code, GenInstr( NULL, "move",
+                TmpRegName(reg_count),
+                "$0", NULL) );
+    AppendSeq( code, GenInstr( s_label, NULL, NULL, NULL, NULL ) );
+    AppendSeq( code, doPrintSpaceHlp() );
+    AppendSeq( code, GenInstr( NULL, "add",
+                TmpRegName( reg_count ),
+                TmpRegName( reg_count ),
+                TmpRegName( reg_one ) ) );
+    AppendSeq( code, GenInstr( NULL, "blt",
+                TmpRegName( reg_count ),
+                TmpRegName( Expr->Reg ),
+                s_label ) );
+    AppendSeq( code, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
+    ReleaseTmpReg( Expr->Reg );
+    ReleaseTmpReg( reg_count );
+    ReleaseTmpReg( reg_one );
+    free (Expr);
+    free(s_label);
+    free(e_label);
+    return code;
+}
+
 struct InstrSeq*
 doAssign( char* name, struct ExprRes* Expr )
 {
@@ -343,6 +387,9 @@ doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     ReleaseTmpReg( Res1->Reg );
     ReleaseTmpReg( Res2->Reg );
     free( Res2 );
+    free( f_label );
+    free( t_label );
+    free( e_label );
     Res1->Reg = reg_result;
     Res1->Type = T_BOOL;
     return Res1;

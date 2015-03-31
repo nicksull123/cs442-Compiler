@@ -23,6 +23,7 @@ int                             {return Int;}
 bool                            {return Bool;}
 print                           {return Write;}
 println                         {return Writeln;}
+printsp                         {return Writesp;}
 {letter}({letter}|{digit})*     {return Ident;}
 {digit}{digit}*                 {return IntLit;}
 \=\=                            {return EQ;}
