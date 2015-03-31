@@ -40,6 +40,7 @@ extern struct SymEntry *entry;
 %type <ExprRes> BHExpr
 %type <ExprRes> OExpr
 %type <ExprRes> AExpr
+%type <InstrSeq> PVarSeq
 
 %token Ident        
 %token IntLit   
@@ -51,6 +52,7 @@ extern struct SymEntry *entry;
 %token True
 %token False
 %token Write
+%token Writeln
 %token IF
 %token EQ   
 %token LT
@@ -68,8 +70,11 @@ Dec             :   Int Ident                               {doDeclare(yytext, T
 Dec             :   Bool Ident                              {doDeclare(yytext, T_BOOL); } ';' {};
 StmtSeq         :   Stmt StmtSeq                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                           {$$ = NULL; };
-Stmt            :   Write AExpr ';'                         {$$ = doPrint($2); };
+Stmt            :   Writeln ';'                             {$$ = doPrintLn();};
+Stmt            :   Write '(' PVarSeq ')' ';'               {$$ = $3;};
 Stmt            :   Id '=' AExpr ';'                        {$$ = doAssign($1, $3); };
+PVarSeq         :   AExpr ',' PVarSeq                       {$$ = doPrintList($1, $3);};
+PVarSeq         :   AExpr                                   {$$ = doPrint($1);};
 AExpr           :   AExpr AND OExpr                         {$$ = doBoolOp($1, $3, B_AND); };
 AExpr           :   OExpr                                   {$$ = $1;};
 OExpr           :   OExpr OR BHExpr                         {$$ = doBoolOp($1, $3, B_OR); };

@@ -22,6 +22,7 @@ if                              {return IF;}
 int                             {return Int;}
 bool                            {return Bool;}
 print                           {return Write;}
+println                         {return Writeln;}
 {letter}({letter}|{digit})*     {return Ident;}
 {digit}{digit}*                 {return IntLit;}
 \=\=                            {return EQ;}
@@ -45,6 +46,7 @@ print                           {return Write;}
 \}                              {return '}';}
 \(                              {return '(';}
 \)                              {return ')';}
+\,                              {return ',';}
 
 [ ]                             {}
 \t                              {}

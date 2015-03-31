@@ -175,6 +175,33 @@ doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
     return Res1;
 }
 
+struct InstrSeq *doPrintSpaceHlp()
+{
+    struct InstrSeq *code;
+    code = GenInstr( NULL, "li", "$v0", "4", NULL );
+    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_sp", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    return code;
+}
+
+struct InstrSeq *doPrintLn()
+{
+    struct InstrSeq *code;
+    code = GenInstr( NULL, "li", "$v0", "4", NULL );
+    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_nl", NULL ) );
+    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    return code;
+}
+
+struct InstrSeq *doPrintList(struct ExprRes *Res1, struct InstrSeq *instrs)
+{
+    struct InstrSeq *res;
+    res = doPrint(Res1);
+    AppendSeq(res, doPrintSpaceHlp());
+    AppendSeq(res, instrs);
+    return res;
+}
+
 struct InstrSeq*
 doPrintInt( struct ExprRes* Expr )
 {
@@ -182,9 +209,6 @@ doPrintInt( struct ExprRes* Expr )
     code = Expr->Instrs;
     AppendSeq( code, GenInstr( NULL, "li", "$v0", "1", NULL ) );
     AppendSeq( code, GenInstr( NULL, "move", "$a0", TmpRegName( Expr->Reg ), NULL ) );
-    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "li", "$v0", "4", NULL ) );
-    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_nl", NULL ) );
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
@@ -207,8 +231,6 @@ doPrintBool( struct ExprRes* Expr )
     AppendSeq( code, GenInstr( NULL, "la", "$a0", "_false", NULL ) );
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( code, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_nl", NULL ) );
-    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
     free( e_label );
@@ -394,6 +416,7 @@ void Finish( struct InstrSeq* Code )
     AppendSeq( code, GenInstr( "_nl", ".asciiz", "\"\\n\"", NULL, NULL ) );
     AppendSeq( code, GenInstr( "_true", ".asciiz", "\"true\"", NULL, NULL ) );
     AppendSeq( code, GenInstr( "_false", ".asciiz", "\"false\"", NULL, NULL ) );
+    AppendSeq( code, GenInstr( "_sp", ".asciiz", "\" \"", NULL, NULL ) );
 
     entry = FirstEntry( table );
     while ( entry )
