@@ -19,9 +19,10 @@ digit [0-9]
 true                            {return True;}
 false                           {return False;}
 if                              {return IF;}
+else                            {return ELSE;}
 int                             {return Int;}
 bool                            {return Bool;}
-while                           {return While;};
+while                           {return While;}
 print                           {return Write;}
 println                         {return Writeln;}
 printsp                         {return Writesp;}
@@ -36,8 +37,10 @@ read                            {return Read;};
 \>\=                            {return GTE;}
 \!\=                            {return NE;}
 \!                              {return NOT;}
-\|\|                            {return OR;};
-\&\&                            {return AND;};
+\|\|                            {return OR;}
+\&\&                            {return AND;}
+\[                              {return '[';}
+\]                              {return ']';}
 \=                              {return '=';}
 \+                              {return '+';}
 \-                              {return '-';}
