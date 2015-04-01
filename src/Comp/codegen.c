@@ -13,11 +13,11 @@ struct TmpReg
     unsigned char Free;
     unsigned char Used;
     char* Name;
-} Registers[ 10 ]
+} Registers[ 11 ]
     = { { 1, 0, "$t0" }, { 1, 0, "$t1" }, { 1, 0, "$t2" }, { 1, 0, "$t3" },
         { 1, 0, "$t4" }, { 1, 0, "$t5" }, { 1, 0, "$t6" }, { 1, 0, "$t7" },
-        { 1, 0, "$t8" }, { 1, 0, "$t9" } };
-#define MAXREG 10
+        { 1, 0, "$t8" }, { 1, 0, "$t9" }, { 0, 1, "$ra" } };
+#define MAXREG 11
 
 char Buf[ 16 ];
 

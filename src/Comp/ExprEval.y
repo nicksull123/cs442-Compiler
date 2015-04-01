@@ -39,10 +39,15 @@ extern struct SymEntry *entry;
 %type <ExprRes> BHExpr
 %type <ExprRes> OExpr
 %type <ExprRes> AExpr
+%type <ExprRes> FuncCall
 %type <InstrSeq> PVarSeq
 %type <InstrSeq> RVarSeq
+%type <InstrSeq> FuncSeq
+%type <InstrSeq> FuncDec
 %type <val> IntVal
 
+%token Func
+%token Return
 %token Ident        
 %token IntLit   
 %token Int
@@ -69,15 +74,21 @@ extern struct SymEntry *entry;
 
 %%
 
-Prog            :   Declarations StmtSeq                                    {Finish($2); } ;
+Prog            :   Declarations FuncSeq                                    {Finish($2); } ;
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
 Dec             :   Int Id ';'                                              {doDeclare($2, T_INT, 1); };
 Dec             :   Bool Id ';'                                             {doDeclare($2, T_BOOL, 1); };
 Dec             :   Int Id '[' IntVal ']' ';'                               {doDeclare($2, T_INT_ARR, $4);};
 Dec             :   Bool Id '[' IntVal ']' ';'                              {doDeclare($2, T_BOOL_ARR, $4);};
+FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
+FuncSeq         :                                                           { };
+FuncDec         :   Func Int Id '(' ')' '{' StmtSeq '}'                     {$$ = doDecFunc($3, $7, T_INT);};
+FuncDec         :   Func Bool Id '(' ')' '{' StmtSeq '}'                    {$$ = doDecFunc($3, $7, T_BOOL);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                                           {$$ = NULL; };
+Stmt            :   Return AExpr ';'                                        {$$ = doReturn($2);};
+Stmt            :   FuncCall ';'                                            {$$ = $1->Instrs;};
 Stmt            :   While '(' AExpr ')' '{' StmtSeq '}'                     {$$ = doWhile($3, $6); };
 Stmt            :   IF '(' AExpr ')' '{' StmtSeq '}'                        {$$ = doIf($3, $6);};
 Stmt            :   IF '(' AExpr ')' '{' StmtSeq '}' ELSE '{' StmtSeq '}'   {$$ = doIfElse($3, $6, $10);};
@@ -122,6 +133,8 @@ Factor          :   NOT AExpr                                               {$$ 
 Factor          :   True                                                    {$$ = doBoolLit(B_TRUE);};
 Factor          :   False                                                   {$$ = doBoolLit(B_FALSE);};
 Factor          :   Str                                                     {$$ = doStrLit(yytext);};
+Factor          :   FuncCall                                                {$$ = $1;};
+FuncCall        :   Id '(' ')'                                              {$$ = doCall($1);};
 Id              :   Ident                                                   {$$ = strdup(yytext); };
 IntVal          :   IntLit                                                  {$$ = atoi(yytext); };
  

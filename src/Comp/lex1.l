@@ -16,6 +16,8 @@ letter [A-Za-z]
 digit [0-9]
 
 %%
+func                            {return Func;}
+return                          {return Return;}
 true                            {return True;}
 false                           {return False;}
 if                              {return IF;}

@@ -7,8 +7,7 @@
 extern int yyparse();
 
 struct SymTab* table;
-struct SymTab* ProcSymTab;
-struct SymEntry* entry;
+struct SymTab *funcTab;
 struct StrLitList *strList;
 
 int inProc = 0;
@@ -17,6 +16,7 @@ FILE* aFile;
 int main(int argc, char* argv[])
 {
     table = CreateSymTab(33);
+    funcTab = CreateSymTab(33);
     strList = NULL;
     OpenFiles(argv[1], NULL);
     if (argc == 3)

@@ -11,6 +11,7 @@
 #include "../IOMngr/IOMngr.h"
 
 extern struct SymTab* table;
+extern struct SymTab *funcTab;
 extern struct StrLitList *strList;
 
 /* Semantic Defines */
@@ -37,6 +38,11 @@ struct VarType
 {
     int Type;
     int Size;
+};
+
+struct FuncType
+{
+    int Type;
 };
 
 struct IdList
@@ -68,6 +74,9 @@ struct StrLitList
 /* Semantics Actions */
 void doDeclare(char *name, int type, int size);
 void typeMismatch();
+struct InstrSeq *doDecFunc( char *name, struct InstrSeq *code, int type );
+struct ExprRes *doCall( char *name);
+struct InstrSeq *doReturn( struct ExprRes *Expr );
 struct ExprRes* doRval( char* name );
 struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
 struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
