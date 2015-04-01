@@ -23,51 +23,6 @@ void doDeclare( char* name, int type, int size )
     SetAttr( ent, (void*)vType );
 }
 
-struct ExprRes *
-doArrVal( char *name, struct ExprRes *Pos )
-{
-    char buf[50];
-    int reg_addr = AvailTmpReg();
-    struct VarType *vType;
-    struct SymEntry *ent = FindName( table, name );
-    if (!ent)
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Undeclared Variable" );
-        exit( 1 );
-    }
-    if(Pos->Type != T_INT){
-        typeMismatch();
-    }
-    snprintf(buf, 50, "0(%s)", TmpRegName(reg_addr));
-    vType = (struct VarType *)GetAttr( ent );
-    AppendSeq(Pos->Instrs, GenInstr(NULL, "la",
-                TmpRegName(reg_addr),
-                name, NULL));
-    AppendSeq(Pos->Instrs, GenInstr(NULL, "mul",
-                TmpRegName(Pos->Reg),
-                TmpRegName(Pos->Reg),
-                "4"));
-    AppendSeq(Pos->Instrs, GenInstr(NULL, "add",
-                TmpRegName(reg_addr),
-                TmpRegName(reg_addr),
-                TmpRegName(Pos->Reg)));
-    AppendSeq(Pos->Instrs, GenInstr(NULL, "lw",
-                TmpRegName(Pos->Reg),
-                buf, NULL));
-
-    if(vType->Type == T_BOOL_ARR)
-    {
-        Pos->Type = T_BOOL;
-    }
-    else 
-    {
-        Pos->Type = T_INT;
-    }
-    ReleaseTmpReg(reg_addr);
-    return Pos;
-}
-
 struct ExprRes*
 doRval( char* name )
 {
@@ -176,52 +131,6 @@ doPrintSp( struct ExprRes* Expr )
     return code;
 }
 
-struct InstrSeq *
-doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos)
-{
-    char buf[50];
-    int reg_addr = AvailTmpReg();
-    struct InstrSeq *code;
-    struct VarType *vType;
-    struct SymEntry *ent = FindName( table, name );
-    if ( !ent ) 
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Undeclared variable" );
-        exit( 1 );
-    }
-    vType = (struct VarType *)GetAttr( ent );
-    if( (Expr->Type == T_BOOL && vType->Type != T_BOOL_ARR) ||
-            (Expr->Type == T_INT && vType->Type != T_INT_ARR) ||
-                Pos->Type != T_INT) 
-    {
-        typeMismatch();
-    }
-    snprintf(buf, 50, "0(%s)", TmpRegName(reg_addr));
-    code = Expr->Instrs;
-    AppendSeq( code, Pos->Instrs );
-    AppendSeq( code, GenInstr( NULL, "la", 
-                TmpRegName( reg_addr ),
-                name, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "mul",
-                TmpRegName( Pos->Reg ),
-                TmpRegName( Pos->Reg ),
-                "4" ) );
-    AppendSeq( code, GenInstr( NULL, "add",
-                TmpRegName( reg_addr ),
-                TmpRegName( reg_addr ),
-                TmpRegName( Pos->Reg ) ) );
-    AppendSeq( code, GenInstr( NULL, "sw", 
-                TmpRegName( Expr->Reg), 
-                buf, NULL ) );
-    ReleaseTmpReg( Expr-> Reg );
-    ReleaseTmpReg(Pos->Reg);
-    ReleaseTmpReg(reg_addr);
-    free(Expr);
-    free(Pos);
-    return code;
-}
-
 struct InstrSeq*
 doAssign( char* name, struct ExprRes* Expr )
 {
@@ -242,81 +151,6 @@ doAssign( char* name, struct ExprRes* Expr )
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
     return code;
-}
-
-struct InstrSeq*
-doIf( struct ExprRes* Expr, struct InstrSeq* code )
-{
-    if ( Expr->Type != T_BOOL )
-    {
-        typeMismatch();
-    }
-
-    struct InstrSeq* nCode = Expr->Instrs;
-    char* end_label = GenLabel();
-    AppendSeq( nCode, GenInstr( NULL, "beq",
-                          TmpRegName( Expr->Reg ),
-                          "$0",
-                          end_label ) );
-    AppendSeq( nCode, code );
-    AppendSeq( nCode, GenInstr( end_label, NULL, NULL, NULL, NULL ) );
-    ReleaseTmpReg( Expr->Reg );
-    free( end_label );
-    free( Expr );
-    return nCode;
-}
-
-struct InstrSeq*
-doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode )
-{
-    if ( Expr->Type != T_BOOL )
-    {
-        typeMismatch();
-    }
-
-    struct InstrSeq* nCode = Expr->Instrs;
-    char* end_label = GenLabel();
-    char* else_label = GenLabel();
-    AppendSeq( nCode, GenInstr( NULL, "beq",
-                          TmpRegName( Expr->Reg ),
-                          "$0",
-                          else_label ) );
-    AppendSeq( nCode, iCode );
-    AppendSeq( nCode, GenInstr( NULL, "b", end_label, NULL, NULL ) );
-    AppendSeq( nCode, GenInstr( else_label, NULL, NULL, NULL, NULL ) );
-    AppendSeq( nCode, eCode );
-    AppendSeq( nCode, GenInstr( end_label, NULL, NULL, NULL, NULL ) );
-    ReleaseTmpReg( Expr->Reg );
-    free( end_label );
-    free( else_label );
-    return nCode;
-}
-
-struct InstrSeq*
-doWhile( struct ExprRes* Expr, struct InstrSeq* code )
-{
-    if ( Expr->Type != T_BOOL )
-    {
-        typeMismatch();
-    }
-
-    char* s_label = GenLabel();
-    char* e_label = GenLabel();
-    struct InstrSeq* nCode;
-    nCode = GenInstr( s_label, NULL, NULL, NULL, NULL );
-    AppendSeq( nCode, Expr->Instrs );
-    AppendSeq( nCode, GenInstr( NULL, "beq",
-                          TmpRegName( Expr->Reg ),
-                          "$0",
-                          e_label ) );
-    AppendSeq( nCode, code );
-    AppendSeq( nCode, GenInstr( NULL, "b", s_label, NULL, NULL ) );
-    AppendSeq( nCode, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
-    ReleaseTmpReg( Expr->Reg );
-    free( s_label );
-    free( e_label );
-    free( Expr );
-    return nCode;
 }
 
 struct InstrSeq*
@@ -343,67 +177,6 @@ doRead( char* var )
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( code, GenInstr( NULL, "sw", "$v0", var, NULL ) );
     return code;
-}
-
-struct InstrSeq *doReturn( struct ExprRes *Expr )
-{
-    struct InstrSeq *code = Expr->Instrs;
-    AppendSeq(code, GenInstr(NULL, "move",
-                "$v0",
-                TmpRegName(Expr->Reg), NULL));
-    AppendSeq(code, GenInstr(NULL, "jr", "$ra", NULL, NULL));
-    ReleaseTmpReg(Expr->Reg);
-    free( Expr );
-    return code;
-}
-
-struct ExprRes *
-doCall( char *name )
-{
-    char buf[1024];
-    snprintf(buf, 1024, "_%s", name);
-    struct SymEntry *entry = FindName( funcTab, buf );
-    if( !entry )
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Function not declared" );
-        exit( 1 );
-    }
-    struct ExprRes *ret = malloc(sizeof(struct ExprRes));
-    struct FuncType *fType = (struct FuncType *)GetAttr(entry);
-    ret->Type = fType->Type;
-    ret->Reg = AvailTmpReg();
-    ret->Instrs = SaveSeq();
-    AppendSeq(ret->Instrs, GenInstr(NULL, "jal", buf, NULL, NULL));;
-    AppendSeq(ret->Instrs, RestoreSeq());
-    AppendSeq(ret->Instrs, GenInstr(NULL, "move",
-                TmpRegName(ret->Reg),
-                "$v0", NULL));
-    return ret;
-}
-
-struct InstrSeq *
-doDecFunc( char *name, struct InstrSeq *code, int type )
-{
-    char buf[1024];
-    snprintf(buf, 1024, "_%s", name);
-    struct InstrSeq *nCode;
-    struct SymEntry *entry;
-    struct FuncType *fType;
-    if( FindName(funcTab, buf) )
-    {
-        WriteIndicator(GetCurrentColumn());
-        WriteMessage("Function Redefinition Illegal");
-        exit( 1 );
-    }
-    EnterName(funcTab, buf, &entry);
-    fType = malloc(sizeof(struct FuncType));
-    fType->Type = type;
-    SetAttr(entry, (void *)fType);
-    nCode = GenInstr(buf, NULL, NULL, NULL, NULL);
-    AppendSeq(nCode, code);
-    AppendSeq(nCode, GenInstr(NULL, "jr", "$ra", NULL, NULL) );
-    return nCode;
 }
 
 void Finish( struct InstrSeq* Code )

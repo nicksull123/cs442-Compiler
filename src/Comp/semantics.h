@@ -74,23 +74,29 @@ struct StrLitList
 /* Semantics Actions */
 void doDeclare(char *name, int type, int size);
 void typeMismatch();
-struct InstrSeq *doDecFunc( char *name, struct InstrSeq *code, int type );
-struct ExprRes *doCall( char *name);
-struct InstrSeq *doReturn( struct ExprRes *Expr );
 struct ExprRes* doRval( char* name );
-struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
 struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
-struct InstrSeq *doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos);
 struct InstrSeq *doPrintList(struct ExprRes *Res1, struct InstrSeq *instrs2);
 struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq *doPrintLn();
 struct InstrSeq *doPrintSp( struct ExprRes *Expr );
-struct InstrSeq *doIf( struct ExprRes *Expr, struct InstrSeq *code );
-struct InstrSeq *doIfElse( struct ExprRes *Expr, struct InstrSeq *iCode, struct InstrSeq *eCode );
-struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
 struct InstrSeq *doRead( char *var );
 struct InstrSeq *doReadList( char *var, struct InstrSeq *code );
 void Finish( struct InstrSeq* Code );
+
+/* Control Semantics Actions */
+struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
+struct InstrSeq *doIfElse( struct ExprRes *Expr, struct InstrSeq *iCode, struct InstrSeq *eCode );
+struct InstrSeq *doIf( struct ExprRes *Expr, struct InstrSeq *code );
+
+/* Arrays Semantics Actions */
+struct InstrSeq *doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos);
+struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
+
+/* Functions Semantics Actions */
+struct InstrSeq *doReturn( struct ExprRes *Expr );
+struct ExprRes *doCall( char *name);
+struct InstrSeq *doDecFunc( char *name, struct InstrSeq *code, int type );
 
 /* Bool Semantics Actions */
 struct ExprRes *doBoolLit( int b );
