@@ -16,10 +16,10 @@ extern struct StrLitList *strList;
 
 /* Semantic Defines */
 #define T_BOOL 0
-#define T_INT 1
-#define T_STR 2
-#define T_BOOL_ARR 3
-#define T_INT_ARR 4
+#define T_BOOL_ARR 1
+#define T_INT 2
+#define T_INT_ARR 3
+#define T_STR 4
 
 #define B_LT 0
 #define B_LTE 1
@@ -72,7 +72,7 @@ struct StrLitList
 };
 
 /* Semantics Actions */
-void doDeclare(char *name, int type, int size);
+void doDeclare(char *name, int type);
 void typeMismatch();
 struct ExprRes* doRval( char* name );
 struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
@@ -90,6 +90,7 @@ struct InstrSeq *doIfElse( struct ExprRes *Expr, struct InstrSeq *iCode, struct 
 struct InstrSeq *doIf( struct ExprRes *Expr, struct InstrSeq *code );
 
 /* Arrays Semantics Actions */
+void doDeclareArr(char *name, int type, int size);
 struct InstrSeq *doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos);
 struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
 

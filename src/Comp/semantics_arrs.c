@@ -1,5 +1,15 @@
 #include "semantics.h"
 
+void doDeclareArr( char* name, int type, int size )
+{
+    struct SymEntry* ent;
+    struct VarType *vType = malloc(sizeof(struct VarType));
+    vType->Type = type + 1;
+    vType->Size = size;
+    EnterName( table, name, &ent );
+    SetAttr( ent, (void*)vType );
+}
+
 struct InstrSeq *
 doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos)
 {

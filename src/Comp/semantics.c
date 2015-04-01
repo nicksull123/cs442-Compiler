@@ -13,12 +13,12 @@ void typeMismatch()
     exit( 1 );
 }
 
-void doDeclare( char* name, int type, int size )
+void doDeclare( char* name, int type)
 {
     struct SymEntry* ent;
     struct VarType *vType = malloc(sizeof(struct VarType));
     vType->Type = type;
-    vType->Size = size;
+    vType->Size = 1;
     EnterName( table, name, &ent );
     SetAttr( ent, (void*)vType );
 }
@@ -185,7 +185,6 @@ void Finish( struct InstrSeq* Code )
     struct SymEntry* entry;
     struct Attr* attr;
     struct StrLitList* strEnt;
-
     code = GenInstr( NULL, ".text", NULL, NULL, NULL );
     AppendSeq( code, GenInstr( NULL, ".globl", "main", NULL, NULL ) );
     AppendSeq( code, GenInstr( "main", NULL, NULL, NULL, NULL ) );

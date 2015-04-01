@@ -27,6 +27,7 @@ extern struct SymEntry *entry;
   struct BExprRes * BExprRes;
 }
 
+%type <val> Type
 %type <string> Id
 %type <ExprRes> Factor
 %type <ExprRes> Term
@@ -77,14 +78,11 @@ extern struct SymEntry *entry;
 Prog            :   Declarations FuncSeq                                    {Finish($2); } ;
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
-Dec             :   Int Id ';'                                              {doDeclare($2, T_INT, 1); };
-Dec             :   Bool Id ';'                                             {doDeclare($2, T_BOOL, 1); };
-Dec             :   Int Id '[' IntVal ']' ';'                               {doDeclare($2, T_INT_ARR, $4);};
-Dec             :   Bool Id '[' IntVal ']' ';'                              {doDeclare($2, T_BOOL_ARR, $4);};
+Dec             :   Type Id ';'                                             {doDeclare($2, $1); };
+Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
-FuncSeq         :                                                           { };
-FuncDec         :   Func Int Id '(' ')' '{' StmtSeq '}'                     {$$ = doDecFunc($3, $7, T_INT);};
-FuncDec         :   Func Bool Id '(' ')' '{' StmtSeq '}'                    {$$ = doDecFunc($3, $7, T_BOOL);};
+FuncSeq         :                                                           {$$ = NULL;};
+FuncDec         :   Func Type Id '(' ')' '{' StmtSeq '}'                    {$$ = doDecFunc($3, $7, $2);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                                           {$$ = NULL; };
 Stmt            :   Return AExpr ';'                                        {$$ = doReturn($2);};
@@ -137,6 +135,8 @@ Factor          :   FuncCall                                                {$$ 
 FuncCall        :   Id '(' ')'                                              {$$ = doCall($1);};
 Id              :   Ident                                                   {$$ = strdup(yytext); };
 IntVal          :   IntLit                                                  {$$ = atoi(yytext); };
+Type            :   Bool                                                    {$$ = T_BOOL;};
+Type            :   Int                                                     {$$ = T_INT;};
  
 %%
 

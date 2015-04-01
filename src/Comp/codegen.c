@@ -52,9 +52,10 @@ AppendSeq( struct InstrSeq* Seq1, struct InstrSeq* Seq2 )
 
     instr = Seq1;
     while ( instr->Next )
+    {
         instr = instr->Next;
+    }
     instr->Next = Seq2;
-
     return Seq1;
 }
 
