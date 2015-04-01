@@ -43,6 +43,7 @@ extern struct SymEntry *entry;
 %type <ExprRes> FuncCall
 %type <InstrSeq> PVarSeq
 %type <InstrSeq> RVarSeq
+%type <InstrSeq> RVar
 %type <InstrSeq> FuncSeq
 %type <InstrSeq> FuncDec
 %type <val> IntVal
@@ -96,8 +97,10 @@ Stmt            :   Writeln ';'                                             {$$ 
 Stmt            :   Write '(' PVarSeq ')' ';'                               {$$ = $3;};
 Stmt            :   Id '=' AExpr ';'                                        {$$ = doAssign($1, $3);};
 Stmt            :   Id '[' AExpr ']' '=' AExpr ';'                          {$$ = doAssignArr($1, $6, $3);};
-RVarSeq         :   Id ',' RVarSeq                                          {$$ = doReadList($1, $3);};
-RVarSeq         :   Id                                                      {$$ = doRead($1);};
+RVarSeq         :   RVar ',' RVarSeq                                        {$$ = AppendSeq($1, $3);};
+RVarSeq         :   RVar                                                    {$$ = $1;};
+RVar            :   Id                                                      {$$ = doRead($1);};
+RVar            :   Id '[' AExpr ']'                                        {$$ = doReadArr($1, $3);};
 PVarSeq         :   AExpr ',' PVarSeq                                       {$$ = doPrintList($1, $3);};
 PVarSeq         :   AExpr                                                   {$$ = doPrint($1);};
 AExpr           :   AExpr AND OExpr                                         {$$ = doBoolOp($1, $3, B_AND); };

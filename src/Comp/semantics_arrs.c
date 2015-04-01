@@ -1,6 +1,7 @@
 #include "semantics.h"
 
-void doDeclareArr( char* name, int type, int size )
+void 
+doDeclareArr( char* name, int type, int size )
 {
     struct SymEntry* ent;
     struct VarType *vType = malloc(sizeof(struct VarType));
@@ -8,6 +9,20 @@ void doDeclareArr( char* name, int type, int size )
     vType->Size = size;
     EnterName( table, name, &ent );
     SetAttr( ent, (void*)vType );
+}
+
+struct InstrSeq *
+doReadArr( char *name, struct ExprRes *Pos )
+{
+    struct ExprRes *res = malloc(sizeof(struct ExprRes));
+    res->Reg = AvailTmpReg();
+    res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
+    res->Type = T_ANY;
+    AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq( res->Instrs, GenInstr( NULL, "move", 
+                TmpRegName(res->Reg), 
+                "$v0", NULL ) );
+    return doAssignArr( name, res, Pos );
 }
 
 struct InstrSeq *
@@ -25,8 +40,8 @@ doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos)
         exit( 1 );
     }
     vType = (struct VarType *)GetAttr( ent );
-    if( (Expr->Type == T_BOOL && vType->Type != T_BOOL_ARR) ||
-            (Expr->Type == T_INT && vType->Type != T_INT_ARR) ||
+    if((Expr->Type != T_ANY && ((Expr->Type == T_BOOL && vType->Type != T_BOOL_ARR) ||
+            (Expr->Type == T_INT && vType->Type != T_INT_ARR))) ||
                 Pos->Type != T_INT) 
     {
         typeMismatch();

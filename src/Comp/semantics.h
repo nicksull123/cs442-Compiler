@@ -20,6 +20,7 @@ extern struct StrLitList *strList;
 #define T_INT 2
 #define T_INT_ARR 3
 #define T_STR 4
+#define T_ANY 5
 
 #define B_LT 0
 #define B_LTE 1
@@ -81,7 +82,6 @@ struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq *doPrintLn();
 struct InstrSeq *doPrintSp( struct ExprRes *Expr );
 struct InstrSeq *doRead( char *var );
-struct InstrSeq *doReadList( char *var, struct InstrSeq *code );
 void Finish( struct InstrSeq* Code );
 
 /* Control Semantics Actions */
@@ -93,6 +93,7 @@ struct InstrSeq *doIf( struct ExprRes *Expr, struct InstrSeq *code );
 void doDeclareArr(char *name, int type, int size);
 struct InstrSeq *doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos);
 struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
+struct InstrSeq *doReadArr( char *name, struct ExprRes *Pos );
 
 /* Functions Semantics Actions */
 struct InstrSeq *doReturn( struct ExprRes *Expr );

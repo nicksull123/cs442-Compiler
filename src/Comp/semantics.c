@@ -6,14 +6,16 @@
 
 /* Semantics support routines */
 
-void typeMismatch()
+void 
+typeMismatch()
 {
     WriteIndicator( GetCurrentColumn() );
     WriteMessage( "Type Mismatch" );
     exit( 1 );
 }
 
-void doDeclare( char* name, int type)
+void 
+doDeclare( char* name, int type)
 {
     struct SymEntry* ent;
     struct VarType *vType = malloc(sizeof(struct VarType));
@@ -142,7 +144,7 @@ doAssign( char* name, struct ExprRes* Expr )
         WriteMessage( "Undeclared variable" );
         exit( 1 );
     }
-    if ( ((struct VarType *)GetAttr( ent ))->Type != Expr->Type )
+    if ( Expr->Type != T_ANY && ((struct VarType *)GetAttr( ent ))->Type != Expr->Type )
     {
         typeMismatch();
     }
@@ -154,29 +156,17 @@ doAssign( char* name, struct ExprRes* Expr )
 }
 
 struct InstrSeq*
-doReadList( char* var, struct InstrSeq* code )
-{
-    struct InstrSeq* instrs;
-    instrs = doRead( var );
-    AppendSeq( instrs, code );
-    return instrs;
-}
-
-struct InstrSeq*
 doRead( char* var )
 {
-    if ( !FindName( table, var ) )
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Undeclared variable" );
-        exit( 1 );
-    }
-
-    struct InstrSeq* code;
-    code = GenInstr( NULL, "li", "$v0", "5", NULL );
-    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "sw", "$v0", var, NULL ) );
-    return code;
+    struct ExprRes *res = malloc(sizeof(struct ExprRes));
+    res->Reg = AvailTmpReg();
+    res->Type = T_ANY;
+    res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
+    AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq( res->Instrs, GenInstr( NULL, "move", 
+                TmpRegName(res->Reg), 
+                "$v0", NULL ) );
+    return doAssign(var, res);
 }
 
 void Finish( struct InstrSeq* Code )
