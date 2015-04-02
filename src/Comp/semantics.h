@@ -10,9 +10,11 @@
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
 
-extern struct SymTab* table;
-extern struct SymTab *funcTab;
-extern struct StrLitList *strList;
+extern struct SymTab* curTab;
+extern struct SymTab* funcTab;
+extern struct TabList* tabList;
+extern struct StrLitList* strList;
+extern int sPos;
 
 /* Semantic Defines */
 #define T_BOOL 0
@@ -21,6 +23,9 @@ extern struct StrLitList *strList;
 #define T_INT_ARR 3
 #define T_STR 4
 #define T_ANY 5
+
+#define V_GBL 0
+#define V_LOC 1
 
 #define B_LT 0
 #define B_LTE 1
@@ -39,17 +44,20 @@ struct VarType
 {
     int Type;
     int Size;
+    int Loc;
+    int SPos;
 };
 
 struct FuncType
 {
     int Type;
+    int VarRsrv;
 };
 
-struct IdList
+struct TabList
 {
-    struct SymEntry* TheEntry;
-    struct IdList* Next;
+    struct SymTab* Tab;
+    struct TabList* Next;
 };
 
 struct ExprRes
@@ -67,53 +75,57 @@ struct ExprResList
 
 struct StrLitList
 {
-    char *label;
-    char *val;
-    struct StrLitList *next;
+    char* label;
+    char* val;
+    struct StrLitList* next;
 };
 
 /* Semantics Actions */
-void doDeclare(char *name, int type);
+void doDeclare( char* name, int type );
+void doPushDecs();
+void doPopDecs();
 void typeMismatch();
+struct VarType* doFindVar( char* name );
 struct ExprRes* doRval( char* name );
-struct InstrSeq* doAssign( char* name, struct ExprRes *Expr );
-struct InstrSeq *doPrintList(struct ExprRes *Res1, struct InstrSeq *instrs2);
+struct InstrSeq* doAssign( char* name, struct ExprRes* Expr );
+struct InstrSeq* doPrintList( struct ExprRes* Res1, struct InstrSeq* instrs2 );
 struct InstrSeq* doPrint( struct ExprRes* Expr );
-struct InstrSeq *doPrintLn();
-struct InstrSeq *doPrintSp( struct ExprRes *Expr );
-struct InstrSeq *doRead( char *var );
+struct InstrSeq* doPrintLn();
+struct InstrSeq* doPrintSp( struct ExprRes* Expr );
+struct InstrSeq* doRead( char* var );
 void Finish( struct InstrSeq* Code );
 
 /* Control Semantics Actions */
-struct InstrSeq *doWhile( struct ExprRes *Expr, struct InstrSeq *code );
-struct InstrSeq *doIfElse( struct ExprRes *Expr, struct InstrSeq *iCode, struct InstrSeq *eCode );
-struct InstrSeq *doIf( struct ExprRes *Expr, struct InstrSeq *code );
+struct InstrSeq* doWhile( struct ExprRes* Expr, struct InstrSeq* code );
+struct InstrSeq* doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode );
+struct InstrSeq* doIf( struct ExprRes* Expr, struct InstrSeq* code );
 
 /* Arrays Semantics Actions */
-void doDeclareArr(char *name, int type, int size);
-struct InstrSeq *doAssignArr( char *name, struct ExprRes *Expr, struct ExprRes *Pos);
-struct ExprRes *doArrVal( char *name, struct ExprRes *Pos );
-struct InstrSeq *doReadArr( char *name, struct ExprRes *Pos );
+void doDeclareArr( char* name, int type, int size );
+struct InstrSeq* doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos );
+struct ExprRes* doArrVal( char* name, struct ExprRes* Pos );
+struct InstrSeq* doReadArr( char* name, struct ExprRes* Pos );
 
 /* Functions Semantics Actions */
-struct InstrSeq *doReturn( struct ExprRes *Expr );
-struct ExprRes *doCall( char *name);
-struct InstrSeq *doDecFunc( char *name, struct InstrSeq *code, int type );
+struct InstrSeq* doReturn( struct ExprRes* Expr );
+struct ExprRes* doCall( char* name );
+struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code, int type );
+struct InstrSeq* doFuncInstrs( struct ExprRes* res );
 
 /* Bool Semantics Actions */
-struct ExprRes *doBoolLit( int b );
-struct ExprRes *doNot( struct ExprRes *Expr );
-struct ExprRes *doBoolOp( struct ExprRes *Res1, struct ExprRes *Res2, int op );
+struct ExprRes* doBoolLit( int b );
+struct ExprRes* doNot( struct ExprRes* Expr );
+struct ExprRes* doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
 struct InstrSeq* doPrintBool( struct ExprRes* Expr );
 
 /* Int Semantics Actions */
 struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
 struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
-struct ExprRes *doPow( struct ExprRes *base, struct ExprRes *pow );
+struct ExprRes* doPow( struct ExprRes* base, struct ExprRes* pow );
 struct ExprRes* doIntLit( char* digits );
-struct ExprRes *doNegate( struct ExprRes *Expr );
+struct ExprRes* doNegate( struct ExprRes* Expr );
 struct InstrSeq* doPrintInt( struct ExprRes* Expr );
 
 /* Str Semantics Actions */
-struct InstrSeq *doPrintStr( struct ExprRes *Expr );
-struct ExprRes *doStrLit( char *str );
+struct InstrSeq* doPrintStr( struct ExprRes* Expr );
+struct ExprRes* doStrLit( char* str );

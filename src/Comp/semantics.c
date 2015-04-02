@@ -6,41 +6,94 @@
 
 /* Semantics support routines */
 
-void 
-typeMismatch()
+void typeMismatch()
 {
     WriteIndicator( GetCurrentColumn() );
     WriteMessage( "Type Mismatch" );
     exit( 1 );
 }
 
-void 
-doDeclare( char* name, int type)
+void doDeclare( char* name, int type )
 {
     struct SymEntry* ent;
-    struct VarType *vType = malloc(sizeof(struct VarType));
+    struct VarType* vType = malloc( sizeof( struct VarType ) );
+    sPos += 4;
     vType->Type = type;
     vType->Size = 1;
-    EnterName( table, name, &ent );
+    vType->SPos = sPos;
+    if ( tabList )
+    {
+        vType->Loc = V_LOC;
+    }
+    else
+    {
+        vType->Loc = V_GBL;
+    }
+    EnterName( curTab, name, &ent );
     SetAttr( ent, (void*)vType );
+}
+
+void doPushDecs()
+{
+    struct TabList* nList = malloc( sizeof( struct TabList ) );
+    nList->Tab = curTab;
+    nList->Next = tabList;
+    tabList = nList;
+    curTab = CreateSymTab( 33 );
+}
+
+void doPopDecs()
+{
+    struct TabList* nHead = tabList->Next;
+    DestroySymTab( tabList->Tab );
+    free( tabList );
+    tabList = nHead;
+    sPos = 0;
+}
+
+struct VarType*
+doFindVar( char* name )
+{
+    struct VarType* vType = NULL;
+    struct TabList* tEnt = tabList;
+    while ( tEnt )
+    {
+        struct SymEntry* ent = FindName( tEnt->Tab, name );
+        if ( ent )
+        {
+            return (struct VarType*)GetAttr( ent );
+        }
+        tEnt = tEnt->Next;
+    }
+    return NULL;
 }
 
 struct ExprRes*
 doRval( char* name )
 {
     struct ExprRes* res;
-    struct VarType *vType;
-    struct SymEntry* ent = FindName( table, name );
-    if ( !ent )
+    struct VarType* vType = doFindVar( name );
+    if ( !vType )
     {
         WriteIndicator( GetCurrentColumn() );
         WriteMessage( "Undeclared Variable" );
         exit( 1 );
     }
-    vType = (struct VarType *)GetAttr( ent );
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
-    res->Instrs = GenInstr( NULL, "lw", TmpRegName( res->Reg ), name, NULL );
+    if ( vType->Loc == V_GBL )
+    {
+        res->Instrs = GenInstr( NULL, "lw",
+            TmpRegName( res->Reg ),
+            name, NULL );
+    }
+    else
+    {
+        res->Instrs = GenInstr( NULL, "lw",
+            TmpRegName( res->Reg ),
+            RegOff( vType->SPos, "$sp" ),
+            NULL );
+    }
     res->Type = vType->Type;
     return res;
 }
@@ -137,19 +190,31 @@ struct InstrSeq*
 doAssign( char* name, struct ExprRes* Expr )
 {
     struct InstrSeq* code;
-    struct SymEntry* ent = FindName( table, name );
-    if ( !ent )
+    struct VarType* vType = doFindVar( name );
+    if ( !vType )
     {
         WriteIndicator( GetCurrentColumn() );
         WriteMessage( "Undeclared variable" );
         exit( 1 );
     }
-    if ( Expr->Type != T_ANY && ((struct VarType *)GetAttr( ent ))->Type != Expr->Type )
+    if ( Expr->Type != T_ANY && vType->Type != Expr->Type )
     {
         typeMismatch();
     }
     code = Expr->Instrs;
-    AppendSeq( code, GenInstr( NULL, "sw", TmpRegName( Expr->Reg ), name, NULL ) );
+    if ( vType->Loc == V_GBL )
+    {
+        AppendSeq( code, GenInstr( NULL, "sw",
+                             TmpRegName( Expr->Reg ),
+                             name, NULL ) );
+    }
+    else
+    {
+        AppendSeq( code, GenInstr( NULL, "sw",
+                             TmpRegName( Expr->Reg ),
+                             RegOff( vType->SPos, "$sp" ),
+                             NULL ) );
+    }
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
     return code;
@@ -158,15 +223,15 @@ doAssign( char* name, struct ExprRes* Expr )
 struct InstrSeq*
 doRead( char* var )
 {
-    struct ExprRes *res = malloc(sizeof(struct ExprRes));
+    struct ExprRes* res = malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Type = T_ANY;
     res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
     AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
-    AppendSeq( res->Instrs, GenInstr( NULL, "move", 
-                TmpRegName(res->Reg), 
-                "$v0", NULL ) );
-    return doAssign(var, res);
+    AppendSeq( res->Instrs, GenInstr( NULL, "move",
+                                TmpRegName( res->Reg ),
+                                "$v0", NULL ) );
+    return doAssign( var, res );
 }
 
 void Finish( struct InstrSeq* Code )
@@ -178,7 +243,7 @@ void Finish( struct InstrSeq* Code )
     code = GenInstr( NULL, ".text", NULL, NULL, NULL );
     AppendSeq( code, GenInstr( NULL, ".globl", "main", NULL, NULL ) );
     AppendSeq( code, GenInstr( "main", NULL, NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "jal", "_main", NULL, NULL) );
+    AppendSeq( code, doFuncInstrs( doCall( "main" ) ) );
     AppendSeq( code, GenInstr( NULL, "li", "$v0", "10", NULL ) );
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( code, Code );
@@ -189,29 +254,29 @@ void Finish( struct InstrSeq* Code )
     AppendSeq( code, GenInstr( "_false", ".asciiz", "\"false\"", NULL, NULL ) );
     AppendSeq( code, GenInstr( "_sp", ".asciiz", "\" \"", NULL, NULL ) );
 
-    entry = FirstEntry( table );
+    entry = FirstEntry( tabList->Tab );
     while ( entry )
     {
-        AppendSeq(code, GenInstr( NULL, ".align", "4", NULL, NULL) );
-        struct VarType *vType;
-        vType = GetAttr(entry);
-        if(vType->Type == T_BOOL_ARR || vType->Type == T_INT_ARR)
+        AppendSeq( code, GenInstr( NULL, ".align", "4", NULL, NULL ) );
+        struct VarType* vType;
+        vType = GetAttr( entry );
+        if ( vType->Type == T_BOOL_ARR || vType->Type == T_INT_ARR )
         {
-            char buf[50];
-            snprintf(buf, 50, "%d", vType->Size * 4);
+            char buf[ 50 ];
+            snprintf( buf, 50, "%d", vType->Size * 4 );
             AppendSeq( code, GenInstr( (char*)GetName( entry ), ".space", buf, NULL, NULL ) );
         }
         else
         {
             AppendSeq( code, GenInstr( (char*)GetName( entry ), ".word", "0", NULL, NULL ) );
         }
-        entry = NextEntry( table, entry );
+        entry = NextEntry( tabList->Tab, entry );
     }
 
     strEnt = strList;
     while ( strEnt )
     {
-        AppendSeq(code, GenInstr( NULL, ".align", "4", NULL, NULL) );
+        AppendSeq( code, GenInstr( NULL, ".align", "4", NULL, NULL ) );
         AppendSeq( code, GenInstr( strEnt->label, ".asciiz", strEnt->val, NULL, NULL ) );
         strEnt = strEnt->next;
     }

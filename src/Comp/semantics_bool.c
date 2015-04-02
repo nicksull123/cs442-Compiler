@@ -87,9 +87,9 @@ doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     {
         typeMismatch();
     }
-    
-    char *opc;
-    switch (op)
+
+    char* opc;
+    switch ( op )
     {
     case B_OR:
         opc = "or";

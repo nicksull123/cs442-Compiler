@@ -76,18 +76,19 @@ extern struct SymEntry *entry;
 
 %%
 
-Prog            :   Declarations FuncSeq                                    {Finish($2); } ;
+Prog            :   DecsCompl FuncSeq                                       {Finish($2); } ;
+DecsCompl       :   Declarations                                            {doPushDecs();};
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
 Dec             :   Type Id ';'                                             {doDeclare($2, $1); };
 Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
-FuncDec         :   Func Type Id '(' ')' '{' StmtSeq '}'                    {$$ = doDecFunc($3, $7, $2);};
+FuncDec         :   Func Type Id '(' ')' '{' DecsCompl StmtSeq '}'          {$$ = doDecFunc($3, $8, $2);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                                           {$$ = NULL; };
 Stmt            :   Return AExpr ';'                                        {$$ = doReturn($2);};
-Stmt            :   FuncCall ';'                                            {$$ = $1->Instrs;};
+Stmt            :   FuncCall ';'                                            {$$ = doFuncInstrs($1);};
 Stmt            :   While '(' AExpr ')' '{' StmtSeq '}'                     {$$ = doWhile($3, $6); };
 Stmt            :   IF '(' AExpr ')' '{' StmtSeq '}'                        {$$ = doIf($3, $6);};
 Stmt            :   IF '(' AExpr ')' '{' StmtSeq '}' ELSE '{' StmtSeq '}'   {$$ = doIfElse($3, $6, $10);};

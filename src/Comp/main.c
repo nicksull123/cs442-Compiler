@@ -6,16 +6,19 @@
 
 extern int yyparse();
 
-struct SymTab* table;
+struct SymTab* curTab;
 struct SymTab *funcTab;
 struct StrLitList *strList;
+struct TabList *tabList;
 
+int sPos = 0;
 int inProc = 0;
 FILE* aFile;
 
 int main(int argc, char* argv[])
 {
-    table = CreateSymTab(33);
+    tabList = NULL;
+    curTab = CreateSymTab(33);
     funcTab = CreateSymTab(33);
     strList = NULL;
     OpenFiles(argv[1], NULL);
