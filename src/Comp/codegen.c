@@ -160,8 +160,8 @@ SaveSeq()
     {
         if ( !Registers[ i ].Free )
         {
-            scnt++;
             sprintf( addr, "%d($sp)", scnt * 4 );
+            scnt++;
             save = AppendSeq( save, GenInstr( NULL, "sw", TmpRegName( i ), addr, NULL ) );
         }
     }
@@ -189,8 +189,8 @@ RestoreSeq()
     {
         if ( !Registers[ i ].Free )
         {
-            scnt++;
             sprintf( addr, "%d($sp)", scnt * 4 );
+            scnt++;
             save = AppendSeq( save, GenInstr( NULL, "lw", TmpRegName( i ), addr, NULL ) );
         }
     }

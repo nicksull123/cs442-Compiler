@@ -4,10 +4,10 @@ void doDeclareArr( char* name, int type, int size )
 {
     struct SymEntry* ent;
     struct VarType* vType = malloc( sizeof( struct VarType ) );
-    sPos += size * 4;
     vType->Type = type + 1;
     vType->Size = size;
     vType->SPos = sPos;
+    sPos += size * 4;
     if ( tabList )
     {
         vType->Loc = V_LOC;
@@ -65,7 +65,7 @@ doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos )
         AppendSeq( code, GenInstr( NULL, "addi",
                              TmpRegName( reg_addr ),
                              "$sp",
-                             Imm(vType->SPos - ((vType->Size - 1) * 4) ) ) );
+                             Imm(vType->SPos) ) );
     }
     AppendSeq( code, GenInstr( NULL, "mul",
                          TmpRegName( Pos->Reg ),
@@ -114,7 +114,7 @@ doArrVal( char* name, struct ExprRes* Pos )
         AppendSeq( Pos->Instrs, GenInstr( NULL, "addi",
                                     TmpRegName( reg_addr ),
                                     "$sp", 
-                                    Imm(vType->SPos - ((vType->Size - 1) * 4))));
+                                    Imm(vType->SPos)));
     }
     AppendSeq( Pos->Instrs, GenInstr( NULL, "mul",
                                 TmpRegName( Pos->Reg ),

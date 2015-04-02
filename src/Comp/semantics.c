@@ -17,10 +17,10 @@ void doDeclare( char* name, int type )
 {
     struct SymEntry* ent;
     struct VarType* vType = malloc( sizeof( struct VarType ) );
-    sPos += 4;
     vType->Type = type;
     vType->Size = 1;
     vType->SPos = sPos;
+    sPos += 4;
     if ( tabList )
     {
         vType->Loc = V_LOC;
