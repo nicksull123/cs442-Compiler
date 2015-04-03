@@ -1,5 +1,5 @@
 SRCDIR=src
-DIRS=SymTab IOMngr ArithInterp
+DIRS=SymTab IOMngr ArithInterp Comp
 
 all: $(DIRS)
 

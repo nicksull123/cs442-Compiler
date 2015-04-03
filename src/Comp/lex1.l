@@ -24,14 +24,24 @@ if                              {return IF;}
 else                            {return ELSE;}
 int                             {return Int;}
 bool                            {return Bool;}
+float                           {return Float;}
 while                           {return While;}
 print                           {return Write;}
 println                         {return Writeln;}
 printsp                         {return Writesp;}
 read                            {return Read;};
-{letter}({letter}|{digit})*     {return Ident;}
-{digit}{digit}*                 {return IntLit;}
-\"(\\.|[^"\\])*\"               {return Str;}
+{letter}({letter}|{digit})*     {
+                                    yylval.string = strdup(yytext);
+                                    return Ident;
+                                }
+{digit}{digit}*                 {
+                                    yylval.val = atoi(yytext);
+                                    return IntLit;
+                                }
+\"(\\.|[^"\\])*\"               {
+                                    yylval.string = strdup(yytext);
+                                    return Str;
+                                }
 \=\=                            {return EQ;}
 \<                              {return LT;}
 \<\=                            {return LTE;}

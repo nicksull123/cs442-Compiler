@@ -1,12 +1,12 @@
 #include "semantics.h"
 
 struct ExprRes*
-doIntLit( char* digits )
+doIntLit( int val )
 {
     struct ExprRes* res;
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
-    res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), digits, NULL );
+    res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), Imm(val), NULL );
     res->Type = T_INT;
     return res;
 }

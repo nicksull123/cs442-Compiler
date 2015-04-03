@@ -11,7 +11,6 @@
 int yylex(); /* The next token function. */
 int yyerror(const char *);
 void dumpTable();
-extern char *yytext;   /* The matched token text.  */
 extern int yyleng;      /* The token text length.   */
 extern int yyparse();
 
@@ -19,6 +18,8 @@ extern struct SymTab *table;
 extern struct SymEntry *entry;
 
 %}
+
+%glr-parser
 
 %union {
   int val;
@@ -30,6 +31,9 @@ extern struct SymEntry *entry;
 
 %type <val> Type
 %type <string> Id
+%type <string> Ident
+%type <string> Str
+%type <val> IntLit
 %type <ExprRes> Factor
 %type <ExprRes> Term
 %type <ExprRes> ETerm
@@ -55,6 +59,7 @@ extern struct SymEntry *entry;
 %token IntLit   
 %token Int
 %token Bool
+%token Float
 %token Str
 %token NOT
 %token OR
@@ -85,7 +90,7 @@ Dec             :   Type Id ';'                                             {doD
 Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
-FuncDec         :   Func Type Id '(' Params ')' '{' DecsCompl StmtSeq '}'   {$$ = doDecFunc($3, $9, $2);};
+FuncDec         :   Type Id '(' Params ')' '{' DecsCompl StmtSeq '}'   {$$ = doDecFunc($2, $8, $1);};
 Params          :   Param ',' Params                                        { };
 Params          :   Param                                                   { };
 Params          :                                                           { };
@@ -132,22 +137,22 @@ ETerm           :   NTerm '^' ETerm                                         {$$ 
 ETerm           :   NTerm                                                   {$$ = $1; };
 NTerm           :   '-' Factor                                              {$$ = doNegate($2); };
 NTerm           :   Factor                                                  {$$ = $1; };
-Factor          :   IntLit                                                  {$$ = doIntLit(yytext); };
+Factor          :   IntLit                                                  {$$ = doIntLit($1); };
 Factor          :   Id                                                      {$$ = doRval($1); };
 Factor          :   Id '[' AExpr ']'                                        {$$ = doArrVal($1, $3);};
 Factor          :   '(' AExpr ')'                                           {$$ = $2; };
 Factor          :   NOT AExpr                                               {$$ = doNot($2);};
 Factor          :   True                                                    {$$ = doBoolLit(B_TRUE);};
 Factor          :   False                                                   {$$ = doBoolLit(B_FALSE);};
-Factor          :   Str                                                     {$$ = doStrLit(yytext);};
+Factor          :   Str                                                     {$$ = doStrLit($1);};
 Factor          :   FuncCall                                                {$$ = $1;};
 FuncCall        :   Id '(' Args  ')'                                        {$$ = doCall($1);};
 Args            :   Arg ',' Args                                            { };            
 Args            :   Arg                                                     { };
 Args            :                                                           { };
 Arg             :   AExpr                                                   {doDecArg($1); };
-Id              :   Ident                                                   {$$ = strdup(yytext); };
-IntVal          :   IntLit                                                  {$$ = atoi(yytext); };
+Id              :   Ident                                                   {$$ = $1; };
+IntVal          :   IntLit                                                  {$$ = $1; };
 Type            :   Bool                                                    {$$ = T_BOOL;};
 Type            :   Int                                                     {$$ = T_INT;};
  

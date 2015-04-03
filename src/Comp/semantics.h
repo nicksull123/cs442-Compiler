@@ -136,7 +136,7 @@ struct InstrSeq* doPrintBool( struct ExprRes* Expr );
 struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
 struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
 struct ExprRes* doPow( struct ExprRes* base, struct ExprRes* pow );
-struct ExprRes* doIntLit( char* digits );
+struct ExprRes* doIntLit( int val );
 struct ExprRes* doNegate( struct ExprRes* Expr );
 struct InstrSeq* doPrintInt( struct ExprRes* Expr );
 
