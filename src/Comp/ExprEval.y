@@ -87,6 +87,7 @@ FuncSeq         :   FuncDec FuncSeq                                         {$$ 
 FuncSeq         :                                                           {$$ = NULL;};
 FuncDec         :   Func Type Id '(' Params ')' '{' DecsCompl StmtSeq '}'   {$$ = doDecFunc($3, $9, $2);};
 Params          :   Param ',' Params                                        { };
+Params          :   Param                                                   { };
 Params          :                                                           { };
 Param           :   Type Id                                                 {doDeclare($2, $1, 1);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
