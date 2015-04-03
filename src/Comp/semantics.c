@@ -13,14 +13,20 @@ void typeMismatch()
     exit( 1 );
 }
 
-void doDeclare( char* name, int type )
+void doDeclare( char* name, int type, int arg )
 {
     struct SymEntry* ent;
     struct VarType* vType = malloc( sizeof( struct VarType ) );
+    vType->Arg = arg;
     vType->Type = type;
     vType->Size = 1;
     vType->SPos = sPos;
     sPos += 4;
+    if( arg )
+    {
+        vType->ArgPos = paramPos;
+        paramPos++;
+    }
     if ( tabList )
     {
         vType->Loc = V_LOC;
@@ -45,10 +51,10 @@ void doPushDecs()
 void doPopDecs()
 {
     struct TabList* nHead = tabList->Next;
-    DestroySymTab( tabList->Tab );
     free( tabList );
     tabList = nHead;
     sPos = 0;
+    paramPos = 0;
 }
 
 struct VarType*
@@ -187,7 +193,7 @@ doPrintSp( struct ExprRes* Expr )
 }
 
 struct InstrSeq*
-doAssign( char* name, struct ExprRes* Expr )
+doAssign( char* name, struct ExprRes* Expr, int SZOff )
 {
     struct InstrSeq* code;
     struct VarType* vType = doFindVar( name );
@@ -210,10 +216,20 @@ doAssign( char* name, struct ExprRes* Expr )
     }
     else
     {
-        AppendSeq( code, GenInstr( NULL, "sw",
+        if( !SZOff )
+        {
+            AppendSeq( code, GenInstr( NULL, "sw",
                              TmpRegName( Expr->Reg ),
                              RegOff( vType->SPos, "$sp" ),
                              NULL ) );
+        }
+        else
+        {
+            AppendSeq( code, GenInstr( NULL, "sw",
+                             TmpRegName( Expr->Reg ),
+                             RegOff( vType->SPos, "$s0" ),
+                             NULL ) );
+        }
     }
     ReleaseTmpReg( Expr->Reg );
     free( Expr );
@@ -231,7 +247,7 @@ doRead( char* var )
     AppendSeq( res->Instrs, GenInstr( NULL, "move",
                                 TmpRegName( res->Reg ),
                                 "$v0", NULL ) );
-    return doAssign( var, res );
+    return doAssign( var, res, 0 );
 }
 
 void Finish( struct InstrSeq* Code )

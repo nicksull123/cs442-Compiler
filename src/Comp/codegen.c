@@ -160,17 +160,14 @@ SaveSeq()
     {
         if ( !Registers[ i ].Free )
         {
-            sprintf( addr, "%d($sp)", scnt * 4 );
+            sprintf( addr, "%d($s0)", scnt * 4 );
             scnt++;
             save = AppendSeq( save, GenInstr( NULL, "sw", TmpRegName( i ), addr, NULL ) );
         }
     }
-    if ( scnt > 0 )
-    {
-        sprintf( offset, "%d", scnt * 4 );
-        code = GenInstr( NULL, "subu", "$sp", "$sp", offset );
-        AppendSeq( code, save );
-    }
+    sprintf( offset, "%d", scnt * 4 );
+    code = GenInstr( NULL, "subu", "$s0", "$sp", offset );
+    AppendSeq( code, save );
 
     return code;
 }

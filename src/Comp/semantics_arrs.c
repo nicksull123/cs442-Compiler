@@ -7,6 +7,7 @@ void doDeclareArr( char* name, int type, int size )
     vType->Type = type + 1;
     vType->Size = size;
     vType->SPos = sPos;
+    vType->Arg = 0;
     sPos += size * 4;
     if ( tabList )
     {

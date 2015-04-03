@@ -13,6 +13,47 @@ doReturn( struct ExprRes* Expr )
     return code;
 }
 
+void doDecArg( struct ExprRes *res )
+{
+    struct ArgList *nEntry = malloc(sizeof(struct ArgList));
+    nEntry->Next = argList;
+    nEntry->ArgPos = argPos;
+    argPos++;
+    nEntry->Res = res;
+    argList = nEntry;
+}
+
+void freeArgList()
+{
+    struct ArgList *aEnt = argList;
+    while(aEnt)
+    {
+        struct ArgList *temp = aEnt->Next;
+        free(aEnt);
+        aEnt = temp;
+    }
+    argPos = 0;
+    argList = NULL;
+}
+
+char *findArgAt(int pos)
+{
+    struct SymTab *tab = tabList->Tab;
+    struct SymEntry *ent = FirstEntry(tab);
+    while( ent )
+    {
+        struct VarType *vType = (struct VarType *)GetAttr(ent);
+        if(vType->Arg && vType->ArgPos == pos)
+        {
+            return (char *)GetName(ent);
+        }
+        ent = NextEntry(tab, ent);
+    }
+    WriteIndicator( GetCurrentColumn() );
+    WriteMessage( "Too Many Arguments" );
+    exit( 1 );
+}
+
 struct ExprRes*
 doCall( char* name )
 {
@@ -27,19 +68,35 @@ doCall( char* name )
     }
     struct ExprRes* ret = malloc( sizeof( struct ExprRes ) );
     struct FuncType* fType = (struct FuncType*)GetAttr( entry );
+    
+    // Swap variable context and store args
+    struct InstrSeq *argInstrs = NULL;
+    struct SymTab *tempTab = tabList->Tab;
+    tabList->Tab = fType->Tab;
+    struct ArgList *aEnt = argList;
+    while(aEnt)
+    {
+        argInstrs = AppendSeq( argInstrs, doAssign(findArgAt(aEnt->ArgPos), aEnt->Res, 1));
+        aEnt = aEnt->Next;
+    }
+    tabList->Tab = tempTab;
+   
     ret->Type = fType->Type;
     ret->Reg = AvailTmpReg();
     ret->Instrs = SaveSeq();
-    AppendSeq( ret->Instrs, GenInstr( NULL, "subu", "$sp",
-                                "$sp", Imm( fType->VarRsrv ) ) );
+    AppendSeq( ret->Instrs, GenInstr( NULL, "subu", "$s0",
+                                "$s0", Imm( fType->VarRsrv ) ) );
+    AppendSeq( ret->Instrs, argInstrs);
+    AppendSeq( ret->Instrs, GenInstr( NULL, "move", "$sp",
+                                "$s0", NULL ) );
     AppendSeq( ret->Instrs, GenInstr( NULL, "jal", buf, NULL, NULL ) );
-    ;
     AppendSeq( ret->Instrs, GenInstr( NULL, "addu", "$sp",
                                 "$sp", Imm( fType->VarRsrv ) ) );
     AppendSeq( ret->Instrs, RestoreSeq() );
     AppendSeq( ret->Instrs, GenInstr( NULL, "move",
                                 TmpRegName( ret->Reg ),
                                 "$v0", NULL ) );
+    freeArgList();
     return ret;
 }
 
@@ -61,6 +118,7 @@ doDecFunc( char* name, struct InstrSeq* code, int type )
     fType = malloc( sizeof( struct FuncType ) );
     fType->Type = type;
     fType->VarRsrv = sPos;
+    fType->Tab = tabList->Tab;
     SetAttr( entry, (void*)fType );
     nCode = GenInstr( buf, NULL, NULL, NULL, NULL );
     AppendSeq( nCode, code );

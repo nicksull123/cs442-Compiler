@@ -10,14 +10,18 @@ struct SymTab* curTab;
 struct SymTab *funcTab;
 struct StrLitList *strList;
 struct TabList *tabList;
+struct ArgList *argList;
 
 int sPos = 0;
+int argPos = 0;
+int paramPos = 0;
 int inProc = 0;
 FILE* aFile;
 
 int main(int argc, char* argv[])
 {
     tabList = NULL;
+    argList = NULL;
     curTab = CreateSymTab(33);
     funcTab = CreateSymTab(33);
     strList = NULL;

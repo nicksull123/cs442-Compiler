@@ -13,7 +13,10 @@
 extern struct SymTab* curTab;
 extern struct SymTab* funcTab;
 extern struct TabList* tabList;
+extern struct ArgList *argList;
 extern struct StrLitList* strList;
+extern int paramPos;
+extern int argPos;
 extern int sPos;
 
 /* Semantic Defines */
@@ -46,12 +49,15 @@ struct VarType
     int Size;
     int Loc;
     int SPos;
+    int Arg;
+    int ArgPos;
 };
 
 struct FuncType
 {
     int Type;
     int VarRsrv;
+    struct SymTab *Tab;
 };
 
 struct TabList
@@ -80,14 +86,21 @@ struct StrLitList
     struct StrLitList* next;
 };
 
+struct ArgList
+{
+    int ArgPos;
+    struct ExprRes *Res;
+    struct ArgList *Next;
+};
+
 /* Semantics Actions */
-void doDeclare( char* name, int type );
+void doDeclare( char* name, int type, int arg );
 void doPushDecs();
 void doPopDecs();
 void typeMismatch();
 struct VarType* doFindVar( char* name );
 struct ExprRes* doRval( char* name );
-struct InstrSeq* doAssign( char* name, struct ExprRes* Expr );
+struct InstrSeq* doAssign( char* name, struct ExprRes* Expr, int SZOff );
 struct InstrSeq* doPrintList( struct ExprRes* Res1, struct InstrSeq* instrs2 );
 struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq* doPrintLn();
@@ -111,6 +124,7 @@ struct InstrSeq* doReturn( struct ExprRes* Expr );
 struct ExprRes* doCall( char* name );
 struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code, int type );
 struct InstrSeq* doFuncInstrs( struct ExprRes* res );
+void doDecArg( struct ExprRes *res );
 
 /* Bool Semantics Actions */
 struct ExprRes* doBoolLit( int b );

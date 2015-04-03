@@ -1,4 +1,5 @@
 %{
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,11 +81,14 @@ Prog            :   DecsCompl FuncSeq                                       {Fin
 DecsCompl       :   Declarations                                            {doPushDecs();};
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
-Dec             :   Type Id ';'                                             {doDeclare($2, $1); };
+Dec             :   Type Id ';'                                             {doDeclare($2, $1, 0); };
 Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
-FuncDec         :   Func Type Id '(' ')' '{' DecsCompl StmtSeq '}'          {$$ = doDecFunc($3, $8, $2);};
+FuncDec         :   Func Type Id '(' Params ')' '{' DecsCompl StmtSeq '}'   {$$ = doDecFunc($3, $9, $2);};
+Params          :   Param ',' Params                                        { };
+Params          :                                                           { };
+Param           :   Type Id                                                 {doDeclare($2, $1, 1);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                                           {$$ = NULL; };
 Stmt            :   Return AExpr ';'                                        {$$ = doReturn($2);};
@@ -96,7 +100,7 @@ Stmt            :   Read '(' RVarSeq ')' ';'                                {$$ 
 Stmt            :   Writesp '(' AExpr ')' ';'                               {$$ = doPrintSp($3);};
 Stmt            :   Writeln ';'                                             {$$ = doPrintLn();};
 Stmt            :   Write '(' PVarSeq ')' ';'                               {$$ = $3;};
-Stmt            :   Id '=' AExpr ';'                                        {$$ = doAssign($1, $3);};
+Stmt            :   Id '=' AExpr ';'                                        {$$ = doAssign($1, $3, 0);};
 Stmt            :   Id '[' AExpr ']' '=' AExpr ';'                          {$$ = doAssignArr($1, $6, $3);};
 RVarSeq         :   RVar ',' RVarSeq                                        {$$ = AppendSeq($1, $3);};
 RVarSeq         :   RVar                                                    {$$ = $1;};
@@ -136,7 +140,11 @@ Factor          :   True                                                    {$$ 
 Factor          :   False                                                   {$$ = doBoolLit(B_FALSE);};
 Factor          :   Str                                                     {$$ = doStrLit(yytext);};
 Factor          :   FuncCall                                                {$$ = $1;};
-FuncCall        :   Id '(' ')'                                              {$$ = doCall($1);};
+FuncCall        :   Id '(' Args  ')'                                        {$$ = doCall($1);};
+Args            :   Arg ',' Args                                            { };            
+Args            :   Arg                                                     { };
+Args            :                                                           { };
+Arg             :   AExpr                                                   {doDecArg($1); };
 Id              :   Ident                                                   {$$ = strdup(yytext); };
 IntVal          :   IntLit                                                  {$$ = atoi(yytext); };
 Type            :   Bool                                                    {$$ = T_BOOL;};
