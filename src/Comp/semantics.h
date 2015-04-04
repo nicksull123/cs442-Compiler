@@ -122,7 +122,8 @@ struct InstrSeq* doReadArr( char* name, struct ExprRes* Pos );
 /* Functions Semantics Actions */
 struct InstrSeq* doReturn( struct ExprRes* Expr );
 struct ExprRes* doCall( char* name );
-struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code, int type );
+void doFuncInit( char *name, int type );
+struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code );
 struct InstrSeq* doFuncInstrs( struct ExprRes* res );
 void doDecArg( struct ExprRes *res );
 

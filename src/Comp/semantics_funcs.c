@@ -1,8 +1,15 @@
 #include "semantics.h"
 
+char *curFuncName = NULL;
+
 struct InstrSeq*
 doReturn( struct ExprRes* Expr )
 {
+    struct FuncType *fType = GetAttr(FindName( funcTab, curFuncName ));
+    if( fType->Type != Expr->Type )
+    {
+        typeMismatch();
+    }
     struct InstrSeq* code = Expr->Instrs;
     AppendSeq( code, GenInstr( NULL, "move",
                          "$v0",
@@ -100,12 +107,11 @@ doCall( char* name )
     return ret;
 }
 
-struct InstrSeq*
-doDecFunc( char* name, struct InstrSeq* code, int type )
+void
+doFuncInit( char *name, int type )
 {
     char buf[ 1024 ];
     snprintf( buf, 1024, "_%s", name );
-    struct InstrSeq* nCode;
     struct SymEntry* entry;
     struct FuncType* fType;
     if ( FindName( funcTab, buf ) )
@@ -115,11 +121,20 @@ doDecFunc( char* name, struct InstrSeq* code, int type )
         exit( 1 );
     }
     EnterName( funcTab, buf, &entry );
+    curFuncName = (char *)GetName(entry);
     fType = malloc( sizeof( struct FuncType ) );
     fType->Type = type;
     fType->VarRsrv = sPos;
     fType->Tab = tabList->Tab;
     SetAttr( entry, (void*)fType );
+}
+
+struct InstrSeq*
+doDecFunc( char* name, struct InstrSeq* code)
+{
+    char buf[ 1024 ];
+    snprintf( buf, 1024, "_%s", name );
+    struct InstrSeq* nCode;
     nCode = GenInstr( buf, NULL, NULL, NULL, NULL );
     AppendSeq( nCode, code );
     AppendSeq( nCode, GenInstr( NULL, "jr", "$ra", NULL, NULL ) );

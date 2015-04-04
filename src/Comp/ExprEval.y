@@ -53,7 +53,6 @@ extern struct SymEntry *entry;
 %type <InstrSeq> FuncDec
 %type <val> IntVal
 
-%token Func
 %token Return
 %token Ident        
 %token IntLit   
@@ -90,7 +89,8 @@ Dec             :   Type Id ';'                                             {doD
 Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
-FuncDec         :   Type Id '(' Params ')' '{' DecsCompl StmtSeq '}'   {$$ = doDecFunc($2, $8, $1);};
+FuncDec         :   Type Id '(' Params ')' '{' DecsCompl                    {doFuncInit($2, $1);}
+                    StmtSeq '}'                                             {$$ = doDecFunc($2, $9);};
 Params          :   Param ',' Params                                        { };
 Params          :   Param                                                   { };
 Params          :                                                           { };
