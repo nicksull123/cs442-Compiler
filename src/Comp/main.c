@@ -1,10 +1,10 @@
 #include <stdio.h>
+#include "y.tab.h"
 #include "Semantics.h"
 #include "CodeGen.h"
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
-
-int yyparse();
+#include "libcode.h"
 
 struct SymTab* curTab;
 struct SymTab *funcTab;
