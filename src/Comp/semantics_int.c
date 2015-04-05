@@ -7,14 +7,34 @@ doIntLit( int val )
     res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), Imm(val), NULL );
-    res->Type = T_INT;
+    res->Type = doVarType(T_INT);
     return res;
+}
+
+struct ExprRes*
+doNegate( struct ExprRes* Expr )
+{
+    if ( Expr->Type->Type != T_INT || Expr->Type->isRef)
+    {
+        typeMismatch();
+    }
+    struct InstrSeq* inst;
+    int reg = AvailTmpReg();
+    inst = GenInstr( NULL, "sub",
+        TmpRegName( reg ),
+        "$0",
+        TmpRegName( Expr->Reg ) );
+    AppendSeq( Expr->Instrs, inst );
+    ReleaseTmpReg( Expr->Reg );
+    Expr->Reg = reg;
+    return Expr;
 }
 
 struct ExprRes*
 doPow( struct ExprRes* base, struct ExprRes* pow )
 {
-    if ( base->Type != T_INT || pow->Type != T_INT )
+    if ( base->Type->Type != T_INT || pow->Type->Type != T_INT
+            || base->Type->isRef || pow->Type->isRef)
     {
         typeMismatch();
     }
@@ -46,6 +66,7 @@ doPow( struct ExprRes* base, struct ExprRes* pow )
     base->Reg = reg_cur;
     free( s_label );
     free( e_label );
+    free( pow->Type );
     free( pow );
     return base;
 }
@@ -53,7 +74,8 @@ doPow( struct ExprRes* base, struct ExprRes* pow )
 struct ExprRes*
 doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
 {
-    if ( Res1->Type != T_INT || Res2->Type != T_INT )
+    if ( Res1->Type->Type != T_INT || Res2->Type->Type != T_INT 
+            || Res1->Type->isRef || Res2->Type->isRef)
     {
         typeMismatch();
     }
@@ -87,6 +109,7 @@ doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
     ReleaseTmpReg( Res1->Reg );
     ReleaseTmpReg( Res2->Reg );
     Res1->Reg = reg;
+    free( Res2->Type );
     free( Res2 );
     return Res1;
 }
@@ -100,6 +123,7 @@ doPrintInt( struct ExprRes* Expr )
     AppendSeq( code, GenInstr( NULL, "move", "$a0", TmpRegName( Expr->Reg ), NULL ) );
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     ReleaseTmpReg( Expr->Reg );
+    free( Expr->Type );
     free( Expr );
     return code;
 }
@@ -107,7 +131,8 @@ doPrintInt( struct ExprRes* Expr )
 struct ExprRes*
 doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
 {
-    if ( Res1->Type != T_INT || Res2->Type != T_INT )
+    if ( Res1->Type->Type != T_INT || Res2->Type->Type != T_INT 
+            || Res1->Type->isRef || Res2->Type->isRef)
     {
         typeMismatch();
     }
@@ -178,11 +203,12 @@ doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     AppendSeq( Res1->Instrs, instrs );
     ReleaseTmpReg( Res1->Reg );
     ReleaseTmpReg( Res2->Reg );
+    free( Res2->Type );
     free( Res2 );
     free( f_label );
     free( t_label );
     free( e_label );
     Res1->Reg = reg_result;
-    Res1->Type = T_BOOL;
+    Res1->Type = doVarType(T_BOOL);
     return Res1;
 }

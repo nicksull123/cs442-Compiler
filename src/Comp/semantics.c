@@ -6,6 +6,16 @@
 
 /* Semantics support routines */
 
+struct VarType *
+doVarType(int type)
+{
+    struct VarType *nType = malloc(sizeof(struct VarType));
+    nType->Type = type;
+    nType->Size = 1;
+    nType->isRef = 0;
+    return nType;
+}
+
 void typeMismatch()
 {
     WriteIndicator( GetCurrentColumn() );
@@ -13,30 +23,27 @@ void typeMismatch()
     exit( 1 );
 }
 
-void doDeclare( char* name, int type, int arg )
+void doDeclare( char* name, struct VarType *type, int arg )
 {
     struct SymEntry* ent;
-    struct VarType* vType = malloc( sizeof( struct VarType ) );
-    vType->Arg = arg;
-    vType->Type = type;
-    vType->Size = 1;
-    vType->SPos = sPos;
-    sPos += 4;
+    type->Arg = arg;
+    type->SPos = sPos;
+    sPos += type->Size * 4;
     if( arg )
     {
-        vType->ArgPos = paramPos;
+        type->ArgPos = paramPos;
         paramPos++;
     }
     if ( tabList )
     {
-        vType->Loc = V_LOC;
+        type->Loc = V_LOC;
     }
     else
     {
-        vType->Loc = V_GBL;
+        type->Loc = V_GBL;
     }
     EnterName( curTab, name, &ent );
-    SetAttr( ent, (void*)vType );
+    SetAttr( ent, (void*)type );
 }
 
 void doPushDecs()
@@ -100,7 +107,8 @@ doRval( char* name )
             RegOff( vType->SPos, "$sp" ),
             NULL );
     }
-    res->Type = vType->Type;
+    res->Type = malloc(sizeof(struct VarType));
+    memcpy(res->Type, vType, sizeof(struct VarType));
     return res;
 }
 
@@ -137,13 +145,15 @@ doPrintList( struct ExprRes* Res1, struct InstrSeq* instrs )
 struct InstrSeq*
 doPrint( struct ExprRes* Expr )
 {
-    if ( Expr->Type == T_BOOL )
-        return doPrintBool( Expr );
-    if ( Expr->Type == T_INT )
-        return doPrintInt( Expr );
-    if ( Expr->Type == T_STR )
-        return doPrintStr( Expr );
-
+    if ( !Expr->Type->isRef )
+    {
+        if ( Expr->Type->Type == T_BOOL )
+            return doPrintBool( Expr );
+        if ( Expr->Type->Type == T_INT )
+            return doPrintInt( Expr );
+        if ( Expr->Type->Type == T_STR )
+            return doPrintStr( Expr );
+    }
     typeMismatch();
     return NULL;
 }
@@ -151,7 +161,7 @@ doPrint( struct ExprRes* Expr )
 struct InstrSeq*
 doPrintSp( struct ExprRes* Expr )
 {
-    if ( Expr->Type != T_INT )
+    if ( Expr->Type->Type != T_INT || Expr->Type->isRef)
     {
         typeMismatch();
     }
@@ -186,6 +196,7 @@ doPrintSp( struct ExprRes* Expr )
     ReleaseTmpReg( Expr->Reg );
     ReleaseTmpReg( reg_count );
     ReleaseTmpReg( reg_one );
+    free( Expr->Type );
     free( Expr );
     free( s_label );
     free( e_label );
@@ -203,7 +214,8 @@ doAssign( char* name, struct ExprRes* Expr, int SZOff )
         WriteMessage( "Undeclared variable" );
         exit( 1 );
     }
-    if ( Expr->Type != T_ANY && vType->Type != Expr->Type )
+    if ( Expr->Type->Type != T_ANY && ((vType->Type != Expr->Type->Type)
+            || (vType->isRef != Expr->Type->isRef)))
     {
         typeMismatch();
     }
@@ -232,6 +244,7 @@ doAssign( char* name, struct ExprRes* Expr, int SZOff )
         }
     }
     ReleaseTmpReg( Expr->Reg );
+    free( Expr->Type );
     free( Expr );
     return code;
 }
@@ -241,7 +254,7 @@ doRead( char* var )
 {
     struct ExprRes* res = malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
-    res->Type = T_ANY;
+    res->Type = doVarType(T_ANY);
     res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
     AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( res->Instrs, GenInstr( NULL, "move",
@@ -276,16 +289,9 @@ void Finish( struct InstrSeq* Code )
         AppendSeq( code, GenInstr( NULL, ".align", "4", NULL, NULL ) );
         struct VarType* vType;
         vType = GetAttr( entry );
-        if ( vType->Type == T_BOOL_ARR || vType->Type == T_INT_ARR )
-        {
-            char buf[ 50 ];
-            snprintf( buf, 50, "%d", vType->Size * 4 );
-            AppendSeq( code, GenInstr( (char*)GetName( entry ), ".space", buf, NULL, NULL ) );
-        }
-        else
-        {
-            AppendSeq( code, GenInstr( (char*)GetName( entry ), ".word", "0", NULL, NULL ) );
-        }
+        char buf[ 50 ];
+        snprintf( buf, 50, "%d", vType->Size * 4 );
+        AppendSeq( code, GenInstr( (char*)GetName( entry ), ".space", buf, NULL, NULL ) );
         entry = NextEntry( tabList->Tab, entry );
     }
 
@@ -298,7 +304,5 @@ void Finish( struct InstrSeq* Code )
     }
 
     WriteSeq( code );
-
-    return;
 }
 

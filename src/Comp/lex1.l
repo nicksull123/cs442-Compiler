@@ -16,6 +16,7 @@ letter [A-Za-z]
 digit [0-9]
 
 %%
+func                            { return Func;}
 return                          {return Return;}
 true                            {return True;}
 false                           {return False;}
@@ -50,6 +51,7 @@ read                            {return Read;};
 \!                              {return NOT;}
 \|\|                            {return OR;}
 \&\&                            {return AND;}
+\&                              {return '&';}
 \[                              {return '[';}
 \]                              {return ']';}
 \=                              {return '=';}

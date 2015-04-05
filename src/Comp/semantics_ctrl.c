@@ -3,7 +3,7 @@
 struct InstrSeq*
 doIf( struct ExprRes* Expr, struct InstrSeq* code )
 {
-    if ( Expr->Type != T_BOOL )
+    if ( Expr->Type->Type != T_BOOL || Expr->Type->isRef)
     {
         typeMismatch();
     }
@@ -18,6 +18,7 @@ doIf( struct ExprRes* Expr, struct InstrSeq* code )
     AppendSeq( nCode, GenInstr( end_label, NULL, NULL, NULL, NULL ) );
     ReleaseTmpReg( Expr->Reg );
     free( end_label );
+    free( Expr->Type );
     free( Expr );
     return nCode;
 }
@@ -25,7 +26,7 @@ doIf( struct ExprRes* Expr, struct InstrSeq* code )
 struct InstrSeq*
 doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode )
 {
-    if ( Expr->Type != T_BOOL )
+    if ( Expr->Type->Type != T_BOOL || Expr->Type->isRef)
     {
         typeMismatch();
     }
@@ -45,13 +46,15 @@ doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode )
     ReleaseTmpReg( Expr->Reg );
     free( end_label );
     free( else_label );
+    free( Expr->Type );
+    free( Expr );
     return nCode;
 }
 
 struct InstrSeq*
 doWhile( struct ExprRes* Expr, struct InstrSeq* code )
 {
-    if ( Expr->Type != T_BOOL )
+    if ( Expr->Type->Type != T_BOOL || Expr->Type->isRef)
     {
         typeMismatch();
     }
@@ -71,6 +74,7 @@ doWhile( struct ExprRes* Expr, struct InstrSeq* code )
     ReleaseTmpReg( Expr->Reg );
     free( s_label );
     free( e_label );
+    free( Expr->Type );
     free( Expr );
     return nCode;
 }

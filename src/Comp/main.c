@@ -4,7 +4,7 @@
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
 
-extern int yyparse();
+int yyparse();
 
 struct SymTab* curTab;
 struct SymTab *funcTab;

@@ -1,33 +1,12 @@
 #include "semantics.h"
 
-void doDeclareArr( char* name, int type, int size )
-{
-    struct SymEntry* ent;
-    struct VarType* vType = malloc( sizeof( struct VarType ) );
-    vType->Type = type + 1;
-    vType->Size = size;
-    vType->SPos = sPos;
-    vType->Arg = 0;
-    sPos += size * 4;
-    if ( tabList )
-    {
-        vType->Loc = V_LOC;
-    }
-    else
-    {
-        vType->Loc = V_GBL;
-    }
-    EnterName( curTab, name, &ent );
-    SetAttr( ent, (void*)vType );
-}
-
 struct InstrSeq*
 doReadArr( char* name, struct ExprRes* Pos )
 {
     struct ExprRes* res = malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
     res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
-    res->Type = T_ANY;
+    res->Type = doVarType(T_ANY);
     AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( res->Instrs, GenInstr( NULL, "move",
                                 TmpRegName( res->Reg ),
@@ -48,13 +27,15 @@ doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos )
         WriteMessage( "Undeclared variable" );
         exit( 1 );
     }
-    if ( ( Expr->Type != T_ANY && ( ( Expr->Type == T_BOOL && vType->Type != T_BOOL_ARR ) || ( Expr->Type == T_INT && vType->Type != T_INT_ARR ) ) ) || Pos->Type != T_INT )
+    if ( (Expr->Type->Type != T_ANY && (vType->Type != Expr->Type->Type)) 
+            || Pos->Type->Type != T_INT || Pos->Type->isRef
+            || vType->isRef != Expr->Type->isRef)
     {
         typeMismatch();
     }
     snprintf( buf, 50, "0(%s)", TmpRegName( reg_addr ) );
-    code = Expr->Instrs;
-    AppendSeq( code, Pos->Instrs );
+    code = Pos->Instrs;
+    AppendSeq( code, Expr->Instrs );
     if ( vType->Loc == V_GBL )
     {
         AppendSeq( code, GenInstr( NULL, "la",
@@ -82,7 +63,9 @@ doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos )
     ReleaseTmpReg( Expr->Reg );
     ReleaseTmpReg( Pos->Reg );
     ReleaseTmpReg( reg_addr );
+    free( Expr->Type );
     free( Expr );
+    free( Pos->Type );
     free( Pos );
     return code;
 }
@@ -99,7 +82,7 @@ doArrVal( char* name, struct ExprRes* Pos )
         WriteMessage( "Undeclared Variable" );
         exit( 1 );
     }
-    if ( Pos->Type != T_INT )
+    if ( Pos->Type->Type != T_INT || Pos->Type->isRef )
     {
         typeMismatch();
     }
@@ -129,14 +112,8 @@ doArrVal( char* name, struct ExprRes* Pos )
                                 TmpRegName( Pos->Reg ),
                                 buf, NULL ) );
 
-    if ( vType->Type == T_BOOL_ARR )
-    {
-        Pos->Type = T_BOOL;
-    }
-    else
-    {
-        Pos->Type = T_INT;
-    }
+    Pos->Type = malloc(sizeof(struct VarType));
+    memcpy(Pos->Type, vType, sizeof(struct VarType));
     ReleaseTmpReg( reg_addr );
     return Pos;
 }

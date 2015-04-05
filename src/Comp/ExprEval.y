@@ -27,9 +27,12 @@ extern struct SymEntry *entry;
   struct ExprRes * ExprRes;
   struct InstrSeq * InstrSeq;
   struct BExprRes * BExprRes;
+  struct VarType *vType;
 }
 
-%type <val> Type
+%type <vType> Ty
+%type <vType> Type
+%type <vType> TyArr
 %type <string> Id
 %type <string> Ident
 %type <string> Str
@@ -53,6 +56,7 @@ extern struct SymEntry *entry;
 %type <InstrSeq> FuncDec
 %type <val> IntVal
 
+%token Func
 %token Return
 %token Ident        
 %token IntLit   
@@ -86,7 +90,6 @@ DecsCompl       :   Declarations                                            {doP
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
 Dec             :   Type Id ';'                                             {doDeclare($2, $1, 0); };
-Dec             :   Type Id '[' IntVal ']' ';'                              {doDeclareArr($2, $1, $4);};
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
 FuncDec         :   Type Id '(' Params ')' '{' DecsCompl                    {doFuncInit($2, $1);}
@@ -138,6 +141,8 @@ ETerm           :   NTerm                                                   {$$ 
 NTerm           :   '-' Factor                                              {$$ = doNegate($2); };
 NTerm           :   Factor                                                  {$$ = $1; };
 Factor          :   IntLit                                                  {$$ = doIntLit($1); };
+Factor          :   '*' Id                                                  { };
+Factor          :   '&' Id                                                  { };
 Factor          :   Id                                                      {$$ = doRval($1); };
 Factor          :   Id '[' AExpr ']'                                        {$$ = doArrVal($1, $3);};
 Factor          :   '(' AExpr ')'                                           {$$ = $2; };
@@ -152,9 +157,19 @@ Args            :   Arg                                                     { };
 Args            :                                                           { };
 Arg             :   AExpr                                                   {doDecArg($1); };
 Id              :   Ident                                                   {$$ = $1; };
-IntVal          :   IntLit                                                  {$$ = $1; };
-Type            :   Bool                                                    {$$ = T_BOOL;};
-Type            :   Int                                                     {$$ = T_INT;};
+Type            :   TyArr '*'                                               {
+                                                                                $$ = $1;
+                                                                                $1->isRef = 1;
+                                                                            };
+Type            :   TyArr                                                   {$$ = $1;};
+TyArr           :   Ty '[' IntVal ']'                                       {
+                                                                                $$ = $1;
+                                                                                $1->Size = $3;
+                                                                            };
+TyArr           :   Ty                                                      {$$ = $1;};
+Ty              :   Bool                                                    {$$ = doVarType(T_BOOL);};
+Ty              :   Int                                                     {$$ = doVarType(T_INT);};
+IntVal          :   IntLit                                                  {$$ = $1;};
  
 %%
 

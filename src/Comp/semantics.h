@@ -21,11 +21,9 @@ extern int sPos;
 
 /* Semantic Defines */
 #define T_BOOL 0
-#define T_BOOL_ARR 1
-#define T_INT 2
-#define T_INT_ARR 3
-#define T_STR 4
-#define T_ANY 5
+#define T_INT 1
+#define T_STR 2
+#define T_ANY 3
 
 #define V_GBL 0
 #define V_LOC 1
@@ -47,6 +45,7 @@ struct VarType
 {
     int Type;
     int Size;
+    int isRef;
     int Loc;
     int SPos;
     int Arg;
@@ -69,14 +68,8 @@ struct TabList
 struct ExprRes
 {
     int Reg;
-    int Type;
+    struct VarType *Type;
     struct InstrSeq* Instrs;
-};
-
-struct ExprResList
-{
-    struct ExprRes* Expr;
-    struct ExprResList* Next;
 };
 
 struct StrLitList
@@ -94,10 +87,11 @@ struct ArgList
 };
 
 /* Semantics Actions */
-void doDeclare( char* name, int type, int arg );
+void doDeclare( char* name, struct VarType *type, int arg );
 void doPushDecs();
 void doPopDecs();
 void typeMismatch();
+struct VarType *doVarType(int type);
 struct VarType* doFindVar( char* name );
 struct ExprRes* doRval( char* name );
 struct InstrSeq* doAssign( char* name, struct ExprRes* Expr, int SZOff );
@@ -114,7 +108,6 @@ struct InstrSeq* doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct 
 struct InstrSeq* doIf( struct ExprRes* Expr, struct InstrSeq* code );
 
 /* Arrays Semantics Actions */
-void doDeclareArr( char* name, int type, int size );
 struct InstrSeq* doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos );
 struct ExprRes* doArrVal( char* name, struct ExprRes* Pos );
 struct InstrSeq* doReadArr( char* name, struct ExprRes* Pos );
@@ -122,7 +115,7 @@ struct InstrSeq* doReadArr( char* name, struct ExprRes* Pos );
 /* Functions Semantics Actions */
 struct InstrSeq* doReturn( struct ExprRes* Expr );
 struct ExprRes* doCall( char* name );
-void doFuncInit( char *name, int type );
+void doFuncInit( char *name, struct VarType *type );
 struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code );
 struct InstrSeq* doFuncInstrs( struct ExprRes* res );
 void doDecArg( struct ExprRes *res );

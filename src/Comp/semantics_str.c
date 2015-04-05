@@ -16,7 +16,7 @@ doStrLit( char* str )
     res->Instrs = GenInstr( NULL, "la",
         TmpRegName( res->Reg ),
         strEnt->label, NULL );
-    res->Type = T_STR;
+    res->Type = doVarType(T_STR);
     return res;
 }
 

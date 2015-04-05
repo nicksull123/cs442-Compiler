@@ -14,27 +14,8 @@ doBoolLit( int b )
     {
         res->Instrs = GenInstr( NULL, "li", TmpRegName( res->Reg ), "0", NULL );
     }
-    res->Type = T_BOOL;
+    res->Type = doVarType(T_BOOL);
     return res;
-}
-
-struct ExprRes*
-doNegate( struct ExprRes* Expr )
-{
-    if ( Expr->Type != T_INT )
-    {
-        typeMismatch();
-    }
-    struct InstrSeq* inst;
-    int reg = AvailTmpReg();
-    inst = GenInstr( NULL, "sub",
-        TmpRegName( reg ),
-        "$0",
-        TmpRegName( Expr->Reg ) );
-    AppendSeq( Expr->Instrs, inst );
-    ReleaseTmpReg( Expr->Reg );
-    Expr->Reg = reg;
-    return Expr;
 }
 
 struct InstrSeq*
@@ -54,6 +35,7 @@ doPrintBool( struct ExprRes* Expr )
     AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( code, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
     ReleaseTmpReg( Expr->Reg );
+    free( Expr->Type );
     free( Expr );
     free( e_label );
     free( f_label );
@@ -63,7 +45,7 @@ doPrintBool( struct ExprRes* Expr )
 struct ExprRes*
 doNot( struct ExprRes* Expr )
 {
-    if ( Expr->Type != T_BOOL )
+    if ( Expr->Type->Type != T_BOOL || Expr->Type->isRef)
     {
         typeMismatch();
     }
@@ -83,7 +65,8 @@ doNot( struct ExprRes* Expr )
 struct ExprRes*
 doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
 {
-    if ( Res1->Type != T_BOOL || Res2->Type != T_BOOL )
+    if ( Res1->Type->Type != T_BOOL || Res2->Type->Type != T_BOOL 
+            || Res1->Type->isRef || Res2->Type->isRef)
     {
         typeMismatch();
     }
@@ -107,6 +90,7 @@ doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
     AppendSeq( Res1->Instrs, Res2->Instrs );
     AppendSeq( Res1->Instrs, instrs );
     ReleaseTmpReg( Res2->Reg );
+    free( Res2->Type );
     free( Res2 );
     return Res1;
 }
