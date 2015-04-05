@@ -214,8 +214,6 @@ doAssign( char* name, struct ExprRes* Expr, int SZOff )
         WriteMessage( "Undeclared variable" );
         exit( 1 );
     }
-    printf("%d\n", Expr->Type->isRef);
-    printf("%d\n", vType->isRef);
     if ( Expr->Type->Type != T_ANY && ((vType->Type != Expr->Type->Type)
             || (vType->isRef != Expr->Type->isRef)))
     {
