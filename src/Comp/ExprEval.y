@@ -1,5 +1,4 @@
 %{
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -141,8 +140,8 @@ ETerm           :   NTerm                                                   {$$ 
 NTerm           :   '-' Factor                                              {$$ = doNegate($2); };
 NTerm           :   Factor                                                  {$$ = $1; };
 Factor          :   IntLit                                                  {$$ = doIntLit($1); };
-Factor          :   '*' Id                                                  { };
-Factor          :   '&' Id                                                  { };
+Factor          :   '*' Id                                                  {$$ = doDeRef($2);};
+Factor          :   '&' Id                                                  {$$ = doAddr($2);};
 Factor          :   Id                                                      {$$ = doRval($1); };
 Factor          :   Id '[' AExpr ']'                                        {$$ = doArrVal($1, $3);};
 Factor          :   '(' AExpr ')'                                           {$$ = $2; };

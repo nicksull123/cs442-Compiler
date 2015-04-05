@@ -137,3 +137,10 @@ struct InstrSeq* doPrintInt( struct ExprRes* Expr );
 /* Str Semantics Actions */
 struct InstrSeq* doPrintStr( struct ExprRes* Expr );
 struct ExprRes* doStrLit( char* str );
+
+/* Pointer Semantics Actions */
+struct ExprRes *doDeRef(char *name);
+struct ExprRes *doAddr(char *name);
+
+
+
