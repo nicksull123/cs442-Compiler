@@ -1,12 +1,12 @@
 #include "semantics.h"
 
-char *curFuncName = NULL;
+char* curFuncName = NULL;
 
 struct InstrSeq*
 doReturn( struct ExprRes* Expr )
 {
-    struct FuncType *fType = GetAttr(FindName( funcTab, curFuncName ));
-    if( fType->Type != Expr->Type->Type || Expr->Type->isRef )
+    struct FuncType* fType = GetAttr( FindName( funcTab, curFuncName ) );
+    if ( fType->Type != Expr->Type->Type || Expr->Type->isRef )
     {
         typeMismatch();
     }
@@ -21,9 +21,9 @@ doReturn( struct ExprRes* Expr )
     return code;
 }
 
-void doDecArg( struct ExprRes *res )
+void doDecArg( struct ExprRes* res )
 {
-    struct ArgList *nEntry = malloc(sizeof(struct ArgList));
+    struct ArgList* nEntry = malloc( sizeof( struct ArgList ) );
     nEntry->Next = argList;
     nEntry->ArgPos = argPos;
     argPos++;
@@ -33,30 +33,29 @@ void doDecArg( struct ExprRes *res )
 
 void freeArgList()
 {
-    struct ArgList *aEnt = argList;
-    while(aEnt)
+    struct ArgList* aEnt = argList;
+    while ( aEnt )
     {
-        struct ArgList *temp = aEnt->Next;
-        free(aEnt);
+        struct ArgList* temp = aEnt->Next;
+        free( aEnt );
         aEnt = temp;
     }
     argPos = 0;
     argList = NULL;
 }
 
-char *
-findArgAt(int pos)
+char* findArgAt( int pos )
 {
-    struct SymTab *tab = tabList->Tab;
-    struct SymEntry *ent = FirstEntry(tab);
-    while( ent )
+    struct SymTab* tab = tabList->Tab;
+    struct SymEntry* ent = FirstEntry( tab );
+    while ( ent )
     {
-        struct VarType *vType = (struct VarType *)GetAttr(ent);
-        if(vType->Arg && vType->ArgPos == pos)
+        struct VarType* vType = (struct VarType*)GetAttr( ent );
+        if ( vType->isArg && vType->ArgPos == pos )
         {
-            return (char *)GetName(ent);
+            return (char*)GetName( ent );
         }
-        ent = NextEntry(tab, ent);
+        ent = NextEntry( tab, ent );
     }
     WriteIndicator( GetCurrentColumn() );
     WriteMessage( "Too Many Arguments" );
@@ -77,25 +76,40 @@ doCall( char* name )
     }
     struct ExprRes* ret = malloc( sizeof( struct ExprRes ) );
     struct FuncType* fType = (struct FuncType*)GetAttr( entry );
-    
+
     // Swap variable context and store args
-    struct InstrSeq *argInstrs = NULL;
-    struct SymTab *tempTab = tabList->Tab;
+    struct InstrSeq* argInstrs = NULL;
+    struct SymTab* tempTab = tabList->Tab;
     tabList->Tab = fType->Tab;
-    struct ArgList *aEnt = argList;
-    while(aEnt)
+    struct ArgList* aEnt = argList;
+    while ( aEnt )
     {
-        argInstrs = AppendSeq( argInstrs, doAssign(findArgAt(aEnt->ArgPos), aEnt->Res, 1));
+        argInstrs = AppendSeq( argInstrs, 
+                doAssign( doIdAddr( strdup( findArgAt( aEnt->ArgPos ) ), 1 ), 
+                    aEnt->Res, 1 ) );
         aEnt = aEnt->Next;
     }
+    entry = FirstEntry(tabList->Tab);
+    while (entry)
+    {
+        struct VarType *vType = (struct VarType *)GetAttr(entry);
+        if(vType->Shim)
+        {
+            struct IdAddr *ptrAddr = doIdAddr(strdup(GetName(entry)), 1);
+            struct IdAddr *shimAddr = doIdAddr(strdup(vType->Shim), 1);
+            argInstrs = AppendSeq(argInstrs,
+                    doAssign( ptrAddr, shimAddr->Addr, 0));
+        }
+        entry = NextEntry(tabList->Tab, entry);
+    }
     tabList->Tab = tempTab;
-   
-    ret->Type = doVarType(fType->Type); 
+
+    ret->Type = doVarType( fType->Type );
     ret->Reg = AvailTmpReg();
     ret->Instrs = SaveSeq();
     AppendSeq( ret->Instrs, GenInstr( NULL, "subu", "$s0",
                                 "$s0", Imm( fType->VarRsrv ) ) );
-    AppendSeq( ret->Instrs, argInstrs);
+    AppendSeq( ret->Instrs, argInstrs );
     AppendSeq( ret->Instrs, GenInstr( NULL, "move", "$sp",
                                 "$s0", NULL ) );
     AppendSeq( ret->Instrs, GenInstr( NULL, "jal", buf, NULL, NULL ) );
@@ -109,8 +123,7 @@ doCall( char* name )
     return ret;
 }
 
-void
-doFuncInit( char *name, struct VarType *type )
+void doFuncInit( char* name, struct VarType* type )
 {
     char buf[ 1024 ];
     snprintf( buf, 1024, "_%s", name );
@@ -123,7 +136,7 @@ doFuncInit( char *name, struct VarType *type )
         exit( 1 );
     }
     EnterName( funcTab, buf, &entry );
-    curFuncName = (char *)GetName(entry);
+    curFuncName = (char*)GetName( entry );
     fType = malloc( sizeof( struct FuncType ) );
     fType->Type = type->Type;
     fType->VarRsrv = sPos;
@@ -132,7 +145,7 @@ doFuncInit( char *name, struct VarType *type )
 }
 
 struct InstrSeq*
-doDecFunc( char* name, struct InstrSeq* code)
+doDecFunc( char* name, struct InstrSeq* code )
 {
     char buf[ 1024 ];
     snprintf( buf, 1024, "_%s", name );

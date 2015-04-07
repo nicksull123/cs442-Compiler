@@ -23,7 +23,8 @@ extern int sPos;
 #define T_BOOL 0
 #define T_INT 1
 #define T_STR 2
-#define T_ANY 3
+#define T_FLOAT 3
+#define T_ANY 4
 
 #define V_GBL 0
 #define V_LOC 1
@@ -44,12 +45,13 @@ extern int sPos;
 struct VarType
 {
     int Type;
-    int Size;
     int isRef;
+    int Size;
     int Loc;
     int SPos;
-    int Arg;
+    int isArg;
     int ArgPos;
+    char *Shim;
 };
 
 struct FuncType
@@ -86,31 +88,32 @@ struct ArgList
     struct ArgList *Next;
 };
 
+struct IdAddr
+{
+    char *Name;
+    struct ExprRes *Addr;
+};
+
 /* Semantics Actions */
-void doDeclare( char* name, struct VarType *type, int arg );
+void doDeclare( char* name, struct VarType *type, int arg, int size );
 void doPushDecs();
 void doPopDecs();
 void typeMismatch();
 struct VarType *doVarType(int type);
 struct VarType* doFindVar( char* name );
-struct ExprRes* doRval( char* name );
-struct InstrSeq* doAssign( char* name, struct ExprRes* Expr, int SZOff );
+struct ExprRes* doRval( struct IdAddr *addr );
+struct InstrSeq* doAssign( struct IdAddr *addr, struct ExprRes* Expr, int inverse);
 struct InstrSeq* doPrintList( struct ExprRes* Res1, struct InstrSeq* instrs2 );
 struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq* doPrintLn();
 struct InstrSeq* doPrintSp( struct ExprRes* Expr );
-struct InstrSeq* doRead( char* var );
+struct InstrSeq* doRead( struct IdAddr *addr );
 void Finish( struct InstrSeq* Code );
 
 /* Control Semantics Actions */
 struct InstrSeq* doWhile( struct ExprRes* Expr, struct InstrSeq* code );
 struct InstrSeq* doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode );
 struct InstrSeq* doIf( struct ExprRes* Expr, struct InstrSeq* code );
-
-/* Arrays Semantics Actions */
-struct InstrSeq* doAssignArr( char* name, struct ExprRes* Expr, struct ExprRes* Pos );
-struct ExprRes* doArrVal( char* name, struct ExprRes* Pos );
-struct InstrSeq* doReadArr( char* name, struct ExprRes* Pos );
 
 /* Functions Semantics Actions */
 struct InstrSeq* doReturn( struct ExprRes* Expr );
@@ -139,8 +142,9 @@ struct InstrSeq* doPrintStr( struct ExprRes* Expr );
 struct ExprRes* doStrLit( char* str );
 
 /* Pointer Semantics Actions */
-struct ExprRes *doDeRef(char *name);
-struct ExprRes *doAddr(char *name);
+struct IdAddr *doIdAddr(char *name, int SZOff);
+struct IdAddr *doDeRef(struct IdAddr *addr, struct ExprRes *offset);
+struct ExprRes *doAddr(struct IdAddr *addr);
 
 
 

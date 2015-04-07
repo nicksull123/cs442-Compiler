@@ -32,7 +32,7 @@ printsp                         {return Writesp;}
 read                            {return Read;};
 {letter}({letter}|{digit})*     {
                                     yylval.string = strdup(yytext);
-                                    return Ident;
+                                    return Id;
                                 }
 {digit}{digit}*                 {
                                     yylval.val = atoi(yytext);

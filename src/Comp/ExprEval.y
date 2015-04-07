@@ -9,9 +9,6 @@
 
 int yylex(); /* The next token function. */
 int yyerror(const char *);
-void dumpTable();
-extern int yyleng;      /* The token text length.   */
-extern int yyparse();
 
 extern struct SymTab *table;
 extern struct SymEntry *entry;
@@ -27,13 +24,13 @@ extern struct SymEntry *entry;
   struct InstrSeq * InstrSeq;
   struct BExprRes * BExprRes;
   struct VarType *vType;
+  struct IdAddr *IdAddr;
 }
 
+%type <IdAddr> IdAddr
 %type <vType> Ty
 %type <vType> Type
-%type <vType> TyArr
 %type <string> Id
-%type <string> Ident
 %type <string> Str
 %type <val> IntLit
 %type <ExprRes> Factor
@@ -53,11 +50,10 @@ extern struct SymEntry *entry;
 %type <InstrSeq> RVar
 %type <InstrSeq> FuncSeq
 %type <InstrSeq> FuncDec
-%type <val> IntVal
 
 %token Func
 %token Return
-%token Ident        
+%token Id 
 %token IntLit   
 %token Int
 %token Bool
@@ -88,7 +84,8 @@ Prog            :   DecsCompl FuncSeq                                       {Fin
 DecsCompl       :   Declarations                                            {doPushDecs();};
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
-Dec             :   Type Id ';'                                             {doDeclare($2, $1, 0); };
+Dec             :   Type Id ';'                                             {doDeclare($2, $1, 0, 1); };
+Dec             :   Ty '[' IntLit ']' Id ';'                                {doDeclare($5, $1, 0, $3); };
 FuncSeq         :   FuncDec FuncSeq                                         {$$ = AppendSeq($1, $2);};
 FuncSeq         :                                                           {$$ = NULL;};
 FuncDec         :   Type Id '(' Params ')' '{' DecsCompl                    {doFuncInit($2, $1);}
@@ -96,7 +93,7 @@ FuncDec         :   Type Id '(' Params ')' '{' DecsCompl                    {doF
 Params          :   Param ',' Params                                        { };
 Params          :   Param                                                   { };
 Params          :                                                           { };
-Param           :   Type Id                                                 {doDeclare($2, $1, 1);};
+Param           :   Type Id                                                 {doDeclare($2, $1, 1, 1);};
 StmtSeq         :   Stmt StmtSeq                                            {$$ = AppendSeq($1, $2); };
 StmtSeq         :                                                           {$$ = NULL; };
 Stmt            :   Return AExpr ';'                                        {$$ = doReturn($2);};
@@ -108,12 +105,10 @@ Stmt            :   Read '(' RVarSeq ')' ';'                                {$$ 
 Stmt            :   Writesp '(' AExpr ')' ';'                               {$$ = doPrintSp($3);};
 Stmt            :   Writeln ';'                                             {$$ = doPrintLn();};
 Stmt            :   Write '(' PVarSeq ')' ';'                               {$$ = $3;};
-Stmt            :   Id '=' AExpr ';'                                        {$$ = doAssign($1, $3, 0);};
-Stmt            :   Id '[' AExpr ']' '=' AExpr ';'                          {$$ = doAssignArr($1, $6, $3);};
+Stmt            :   IdAddr '=' AExpr ';'                                    {$$ = doAssign($1, $3, 0);};
 RVarSeq         :   RVar ',' RVarSeq                                        {$$ = AppendSeq($1, $3);};
 RVarSeq         :   RVar                                                    {$$ = $1;};
-RVar            :   Id                                                      {$$ = doRead($1);};
-RVar            :   Id '[' AExpr ']'                                        {$$ = doReadArr($1, $3);};
+RVar            :   IdAddr                                                  {$$ = doRead($1);};
 PVarSeq         :   AExpr ',' PVarSeq                                       {$$ = doPrintList($1, $3);};
 PVarSeq         :   AExpr                                                   {$$ = doPrint($1);};
 AExpr           :   AExpr AND OExpr                                         {$$ = doBoolOp($1, $3, B_AND); };
@@ -140,10 +135,8 @@ ETerm           :   NTerm                                                   {$$ 
 NTerm           :   '-' Factor                                              {$$ = doNegate($2); };
 NTerm           :   Factor                                                  {$$ = $1; };
 Factor          :   IntLit                                                  {$$ = doIntLit($1); };
-Factor          :   '*' Id                                                  {$$ = doDeRef($2);};
-Factor          :   '&' Id                                                  {$$ = doAddr($2);};
-Factor          :   Id                                                      {$$ = doRval($1); };
-Factor          :   Id '[' AExpr ']'                                        {$$ = doArrVal($1, $3);};
+Factor          :   '&' IdAddr                                              {$$ = doAddr($2);};
+Factor          :   IdAddr                                                  {$$ = doRval($1); };
 Factor          :   '(' AExpr ')'                                           {$$ = $2; };
 Factor          :   NOT AExpr                                               {$$ = doNot($2);};
 Factor          :   True                                                    {$$ = doBoolLit(B_TRUE);};
@@ -155,20 +148,20 @@ Args            :   Arg ',' Args                                            { };
 Args            :   Arg                                                     { };
 Args            :                                                           { };
 Arg             :   AExpr                                                   {doDecArg($1); };
-Id              :   Ident                                                   {$$ = $1; };
-Type            :   TyArr '*'                                               {
+IdAddr          :   Id                                                      {$$ = doIdAddr($1, 0);};
+IdAddr          :   Id '[' AExpr ']'                                        {$$ = doDeRef(doIdAddr($1, 0), $3);};
+IdAddr          :   '*' Id                                                  {$$ = doDeRef(doIdAddr($2, 0), NULL);};
+Type            :   Ty '*'                                                  {  
                                                                                 $$ = $1;
                                                                                 $1->isRef = 1;
                                                                             };
-Type            :   TyArr                                                   {$$ = $1;};
-TyArr           :   Ty '[' IntVal ']'                                       {
+                |   Ty '[' ']'                                              {
                                                                                 $$ = $1;
-                                                                                $1->Size = $3;
+                                                                                $1->isRef = 1;
                                                                             };
-TyArr           :   Ty                                                      {$$ = $1;};
+Type            :   Ty                                                      {$$ = $1;};
 Ty              :   Bool                                                    {$$ = doVarType(T_BOOL);};
 Ty              :   Int                                                     {$$ = doVarType(T_INT);};
-IntVal          :   IntLit                                                  {$$ = $1;};
  
 %%
 

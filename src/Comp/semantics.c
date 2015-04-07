@@ -6,10 +6,10 @@
 
 /* Semantics support routines */
 
-struct VarType *
-doVarType(int type)
+struct VarType*
+doVarType( int type )
 {
-    struct VarType *nType = malloc(sizeof(struct VarType));
+    struct VarType* nType = malloc( sizeof( struct VarType ) );
     nType->Type = type;
     nType->Size = 1;
     nType->isRef = 0;
@@ -23,13 +23,14 @@ void typeMismatch()
     exit( 1 );
 }
 
-void doDeclare( char* name, struct VarType *type, int arg )
+void doDeclare( char* name, struct VarType* type, int arg, int size )
 {
     struct SymEntry* ent;
-    type->Arg = arg;
+    type->isArg = arg;
     type->SPos = sPos;
+    type->Shim = NULL;
     sPos += type->Size * 4;
-    if( arg )
+    if ( arg )
     {
         type->ArgPos = paramPos;
         paramPos++;
@@ -41,6 +42,21 @@ void doDeclare( char* name, struct VarType *type, int arg )
     else
     {
         type->Loc = V_GBL;
+    }
+    if ( size > 1 )
+    {
+        type->isRef = 1;
+        char buf[ 50 ];
+        snprintf( buf, 50, "_%s", name );
+        type->Shim = strdup( buf );
+        struct VarType* shim = malloc( sizeof( struct VarType ) );
+        memcpy( shim, type, sizeof( struct VarType ) );
+        shim->Size = size;
+        shim->Shim = NULL;
+        shim->SPos = sPos;
+        sPos += shim->Size * 4;
+        EnterName( curTab, buf, &ent );
+        SetAttr( ent, (void*)shim );
     }
     EnterName( curTab, name, &ent );
     SetAttr( ent, (void*)type );
@@ -82,34 +98,16 @@ doFindVar( char* name )
 }
 
 struct ExprRes*
-doRval( char* name )
+doRval( struct IdAddr* addr )
 {
-    struct ExprRes* res;
-    struct VarType* vType = doFindVar( name );
-    if ( !vType )
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Undeclared Variable" );
-        exit( 1 );
-    }
-    res = (struct ExprRes*)malloc( sizeof( struct ExprRes ) );
-    res->Reg = AvailTmpReg();
-    if ( vType->Loc == V_GBL )
-    {
-        res->Instrs = GenInstr( NULL, "lw",
-            TmpRegName( res->Reg ),
-            name, NULL );
-    }
-    else
-    {
-        res->Instrs = GenInstr( NULL, "lw",
-            TmpRegName( res->Reg ),
-            RegOff( vType->SPos, "$sp" ),
-            NULL );
-    }
-    res->Type = malloc(sizeof(struct VarType));
-    memcpy(res->Type, vType, sizeof(struct VarType));
-    return res;
+    struct ExprRes* addrExpr = addr->Addr;
+    AppendSeq( addrExpr->Instrs, GenInstr( NULL, "lw",
+                                     TmpRegName( addrExpr->Reg ),
+                                     RegOff( 0, TmpRegName( addrExpr->Reg ) ),
+                                     NULL ) );
+    free( addr->Name );
+    free( addr );
+    return addrExpr;
 }
 
 struct InstrSeq*
@@ -161,7 +159,7 @@ doPrint( struct ExprRes* Expr )
 struct InstrSeq*
 doPrintSp( struct ExprRes* Expr )
 {
-    if ( Expr->Type->Type != T_INT || Expr->Type->isRef)
+    if ( Expr->Type->Type != T_INT || Expr->Type->isRef )
     {
         typeMismatch();
     }
@@ -204,63 +202,53 @@ doPrintSp( struct ExprRes* Expr )
 }
 
 struct InstrSeq*
-doAssign( char* name, struct ExprRes* Expr, int SZOff )
+doAssign( struct IdAddr* addr, struct ExprRes* Expr, int inverse )
 {
     struct InstrSeq* code;
-    struct VarType* vType = doFindVar( name );
-    if ( !vType )
-    {
-        WriteIndicator( GetCurrentColumn() );
-        WriteMessage( "Undeclared variable" );
-        exit( 1 );
-    }
-    if ( Expr->Type->Type != T_ANY && ((vType->Type != Expr->Type->Type)
-            || (vType->isRef != Expr->Type->isRef)))
+    struct ExprRes* addrExpr = addr->Addr;
+    if ( Expr->Type->Type != T_ANY && ( ( addrExpr->Type->Type != Expr->Type->Type )
+                                          || ( addrExpr->Type->isRef != Expr->Type->isRef ) ) )
     {
         typeMismatch();
     }
-    code = Expr->Instrs;
-    if ( vType->Loc == V_GBL )
+    if ( inverse )
     {
-        AppendSeq( code, GenInstr( NULL, "sw",
-                             TmpRegName( Expr->Reg ),
-                             name, NULL ) );
+        code = Expr->Instrs;
+        AppendSeq( code, addrExpr->Instrs );
     }
     else
     {
-        if( !SZOff )
-        {
-            AppendSeq( code, GenInstr( NULL, "sw",
-                             TmpRegName( Expr->Reg ),
-                             RegOff( vType->SPos, "$sp" ),
-                             NULL ) );
-        }
-        else
-        {
-            AppendSeq( code, GenInstr( NULL, "sw",
-                             TmpRegName( Expr->Reg ),
-                             RegOff( vType->SPos, "$s0" ),
-                             NULL ) );
-        }
+        code = addrExpr->Instrs;
+        AppendSeq( code, Expr->Instrs );
     }
+    AppendSeq( code, GenInstr( NULL, "sw",
+                         TmpRegName( Expr->Reg ),
+                         RegOff( 0, TmpRegName( addrExpr->Reg ) ),
+                         NULL ) );
     ReleaseTmpReg( Expr->Reg );
+    ReleaseTmpReg( addrExpr->Reg );
+    free( addr->Name );
+    free( addr->Addr->Type );
+    free( addr->Addr );
+    free( addr );
     free( Expr->Type );
     free( Expr );
     return code;
 }
 
 struct InstrSeq*
-doRead( char* var )
+doRead( struct IdAddr* addr )
 {
     struct ExprRes* res = malloc( sizeof( struct ExprRes ) );
     res->Reg = AvailTmpReg();
-    res->Type = doVarType(T_ANY);
+    res->Type = malloc( sizeof( struct VarType ) );
+    memcpy( res->Type, addr->Addr->Type, sizeof( struct VarType ) );
     res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
     AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
     AppendSeq( res->Instrs, GenInstr( NULL, "move",
                                 TmpRegName( res->Reg ),
                                 "$v0", NULL ) );
-    return doAssign( var, res, 0 );
+    return doAssign( addr, res, 0 );
 }
 
 void Finish( struct InstrSeq* Code )
@@ -290,8 +278,15 @@ void Finish( struct InstrSeq* Code )
         struct VarType* vType;
         vType = GetAttr( entry );
         char buf[ 50 ];
-        snprintf( buf, 50, "%d", vType->Size * 4 );
-        AppendSeq( code, GenInstr( (char*)GetName( entry ), ".space", buf, NULL, NULL ) );
+        if ( vType->Shim )
+        {
+            AppendSeq( code, GenInstr( (char*)GetName( entry ), ".word", vType->Shim, NULL, NULL ) );
+        }
+        else
+        {
+            snprintf( buf, 50, "%d", vType->Size * 4 );
+            AppendSeq( code, GenInstr( (char*)GetName( entry ), ".space", buf, NULL, NULL ) );
+        }
         entry = NextEntry( tabList->Tab, entry );
     }
 
