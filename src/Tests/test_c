@@ -1,0 +1,10 @@
+int
+main()
+{
+    int i;
+    int j;
+    j = 2;
+    i = j ^ 3 + 1;
+    print("expected: 9\n");
+    print("result:", i, "\n");
+}

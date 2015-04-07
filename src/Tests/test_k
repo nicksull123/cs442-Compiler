@@ -1,0 +1,11 @@
+int
+main()
+{
+    int i;
+    int j;
+    bool k;
+
+    print("Enter [int] [int] [bool]\n");
+    read(i, j, k);
+    print("Entered:", i, j, k, "\n");
+}

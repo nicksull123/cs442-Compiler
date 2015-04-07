@@ -1,0 +1,12 @@
+int
+main()
+{
+    int i;
+    int j;
+    i = 5;
+    j = 10;
+    print(true, false, true, false, true, false, false, true, "\n");
+    print(i < j, j < i, j > i, i > j, i == i, i == j, i != i, i != j, "\n");
+    print(true, true, false, true, true, false, "\n");
+    print(i <= i, i <= j, j <= i, j >= j, j >= i, i >= j, "\n");
+}

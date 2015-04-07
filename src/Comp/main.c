@@ -4,7 +4,6 @@
 #include "CodeGen.h"
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
-#include "libcode.h"
 
 struct SymTab* curTab;
 struct SymTab *funcTab;

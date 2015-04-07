@@ -1,0 +1,39 @@
+int
+main()
+{
+    bool i;
+    int j;
+    int k;
+    i = true;
+    j = 10;
+    k = 5;
+
+    if(i)
+    {
+        print("should run\n");
+    }
+    if(!i)
+    {
+        print("should not run\n");
+    }
+    if(!i)
+    {
+        print("should not run\n");
+    }
+    else
+    {
+        print("should run\n");
+    }
+    if(j > k)
+    {
+        print("should run\n");
+    }
+    else
+    {
+        print("should not run\n");
+    }
+    if( k < j && i)
+    {
+        print("should run\n");
+    }
+}

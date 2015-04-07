@@ -1,0 +1,10 @@
+int
+main()
+{
+    int i;
+    int j;
+    j = 5;
+    i = -(j % 3);
+    print("expected: -2\n");
+    print("result:", i, "\n");
+}

@@ -1,0 +1,10 @@
+int
+main()
+{
+    bool i;
+    bool k;
+    i = true;
+    k = false;
+    print("result:  ", k || i, i && i, i && k, !i, !k, "\n");
+    print("expected:", true, true, false, false, true, "\n");
+}

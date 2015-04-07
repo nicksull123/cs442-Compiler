@@ -1,0 +1,18 @@
+int
+genint()
+{
+    return 5;
+}
+
+bool
+genbool()
+{
+    return true;
+}
+
+int
+main()
+{
+    print("Expected:", 5, true, "\n");
+    print("Result:  ", genint(), genbool(), "\n");
+}

@@ -1,0 +1,12 @@
+int
+main()
+{
+    int i;
+    int k;
+    int j;
+    k = 10;
+    j = 2;
+    i = (((k - j) / 2) * 3) + 1;
+    print("expected: 13\n");
+    print("result:", i, "\n");
+}

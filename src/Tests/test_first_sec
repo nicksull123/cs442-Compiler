@@ -1,0 +1,14 @@
+int
+main()
+{
+    bool i;
+    bool q;
+    int k;
+    int j;
+    j = 5;
+    k = 3;
+    i = 2 * j > j + k && j == 5;
+    q = 2 * j > j + k && j != 5;
+    print("expected:", true, false, "\n");
+    print("result:  ", i, q, "\n");
+}

@@ -1,0 +1,23 @@
+int i;
+
+int 
+setGbl()
+{
+    i = 5;
+}
+
+int 
+printGbl()
+{
+    print("Gbl:", i, "\n");
+}
+
+int
+main()
+{
+    int i;
+    setGbl();
+    i = 22;
+    print("Local:", i, "\n");
+    printGbl();
+}

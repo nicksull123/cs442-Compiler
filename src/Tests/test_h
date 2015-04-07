@@ -1,0 +1,10 @@
+int
+main()
+{
+    print("Hello");
+    println;
+    print("World");
+    println;
+    print("!");
+    println;
+}

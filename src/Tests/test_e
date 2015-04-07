@@ -1,0 +1,12 @@
+int
+main()
+{
+    bool i;
+    bool k;
+    bool j;
+    k = false;
+    i = true;
+    j = i;
+    print("expected:", false, true, true, "\n");
+    print("result:", k, i, j, "\n");
+}

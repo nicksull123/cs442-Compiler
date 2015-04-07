@@ -1,0 +1,7 @@
+int
+main()
+{
+    print("Hello");
+    printsp(3 + 2);
+    print("World!\n");
+}

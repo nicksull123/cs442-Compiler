@@ -1,5 +1,0 @@
-int
-pow_int(int base, int pow)
-{
-    return 1;
-}

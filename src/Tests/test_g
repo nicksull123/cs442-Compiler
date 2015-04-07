@@ -1,0 +1,13 @@
+int
+main()
+{
+    int i;
+    int k;
+    bool j;
+
+    i = 5;
+    k = 20;
+    j = k < i;
+    print("result:  ", false || true, j, i, k, i + k, "\n");
+    print("expected:", true, false, 5, 20, 25, "\n");
+}
