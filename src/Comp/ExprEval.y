@@ -19,6 +19,7 @@ extern struct SymEntry *entry;
 
 %union {
   int val;
+  float fval;
   char * string;
   struct ExprRes * ExprRes;
   struct InstrSeq * InstrSeq;
@@ -33,6 +34,7 @@ extern struct SymEntry *entry;
 %type <string> Id
 %type <string> Str
 %type <val> IntLit
+%type <fval> FloatLit
 %type <ExprRes> Factor
 %type <ExprRes> Term
 %type <ExprRes> ETerm
@@ -51,10 +53,10 @@ extern struct SymEntry *entry;
 %type <InstrSeq> FuncSeq
 %type <InstrSeq> FuncDec
 
-%token Func
 %token Return
 %token Id 
 %token IntLit   
+%token FloatLit
 %token Int
 %token Bool
 %token Float
@@ -80,7 +82,7 @@ extern struct SymEntry *entry;
 
 %%
 
-Prog            :   DecsCompl FuncSeq                                       {Finish($2); } ;
+Prog            :   DecsCompl FuncSeq                                       {Finish($2);};
 DecsCompl       :   Declarations                                            {doPushDecs();};
 Declarations    :   Dec Declarations                                        { };
 Declarations    :                                                           { };
@@ -135,6 +137,7 @@ ETerm           :   NTerm                                                   {$$ 
 NTerm           :   '-' Factor                                              {$$ = doNegate($2); };
 NTerm           :   Factor                                                  {$$ = $1; };
 Factor          :   IntLit                                                  {$$ = doIntLit($1); };
+Factor          :   FloatLit                                                {$$ = doFloatLit($1);};
 Factor          :   '&' IdAddr                                              {$$ = doAddr($2);};
 Factor          :   IdAddr                                                  {$$ = doRval($1); };
 Factor          :   '(' AExpr ')'                                           {$$ = $2; };
@@ -143,6 +146,8 @@ Factor          :   True                                                    {$$ 
 Factor          :   False                                                   {$$ = doBoolLit(B_FALSE);};
 Factor          :   Str                                                     {$$ = doStrLit($1);};
 Factor          :   FuncCall                                                {$$ = $1;};
+Factor          :   Float '(' AExpr ')'                                     {$$ = doIntToFloat($3);};
+Factor          :   Int '(' AExpr ')'                                       {$$ = doFloatToInt($3);};
 FuncCall        :   Id '(' Args  ')'                                        {$$ = doCall($1);};
 Args            :   Arg ',' Args                                            { };            
 Args            :   Arg                                                     { };
@@ -162,6 +167,7 @@ Type            :   Ty '*'                                                  {
 Type            :   Ty                                                      {$$ = $1;};
 Ty              :   Bool                                                    {$$ = doVarType(T_BOOL);};
 Ty              :   Int                                                     {$$ = doVarType(T_INT);};
+Ty              :   Float                                                   {$$ = doVarType(T_FLOAT);};
  
 %%
 

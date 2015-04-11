@@ -21,25 +21,8 @@ doBoolLit( int b )
 struct InstrSeq*
 doPrintBool( struct ExprRes* Expr )
 {
-    struct InstrSeq* code;
-    char* e_label = GenLabel();
-    char* f_label = GenLabel();
-    code = Expr->Instrs;
-    AppendSeq( code, GenInstr( NULL, "li", "$v0", "4", NULL ) );
-    AppendSeq( code, GenInstr( NULL, "beq", TmpRegName( Expr->Reg ), "$0", f_label ) );
-    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_true", NULL ) );
-    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "b", e_label, NULL, NULL ) );
-    AppendSeq( code, GenInstr( f_label, NULL, NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( NULL, "la", "$a0", "_false", NULL ) );
-    AppendSeq( code, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
-    AppendSeq( code, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
-    ReleaseTmpReg( Expr->Reg );
-    free( Expr->Type );
-    free( Expr );
-    free( e_label );
-    free( f_label );
-    return code;
+    doDecArg(Expr);
+    return doFuncInstrs(doCall("INTERNALPrintBool"));
 }
 
 struct ExprRes*

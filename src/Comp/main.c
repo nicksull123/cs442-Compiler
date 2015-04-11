@@ -14,7 +14,6 @@ struct ArgList *argList;
 int sPos = 0;
 int argPos = 0;
 int paramPos = 0;
-int inProc = 0;
 FILE* aFile;
 
 int main(int argc, char* argv[])
@@ -30,6 +29,10 @@ int main(int argc, char* argv[])
     else
         aFile = stdout;
 
+    parseStdLib = 1;
+    yyparse();
+    parseStdLib = 0;
+    doPopDecs();
     yyparse();
 }
 

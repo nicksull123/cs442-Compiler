@@ -12,73 +12,38 @@ doIntLit( int val )
 }
 
 struct ExprRes*
-doNegate( struct ExprRes* Expr )
+doReadInt( struct IdAddr* addr )
 {
-    if ( Expr->Type->Type != T_INT || Expr->Type->isRef)
-    {
-        typeMismatch();
-    }
-    struct InstrSeq* inst;
-    int reg = AvailTmpReg();
-    inst = GenInstr( NULL, "sub",
-        TmpRegName( reg ),
-        "$0",
-        TmpRegName( Expr->Reg ) );
-    AppendSeq( Expr->Instrs, inst );
-    ReleaseTmpReg( Expr->Reg );
-    Expr->Reg = reg;
-    return Expr;
+    struct ExprRes* res = malloc( sizeof( struct ExprRes ) );
+    res->Reg = AvailTmpReg();
+    res->Type = malloc( sizeof( struct VarType ) );
+    memcpy( res->Type, addr->Addr->Type, sizeof( struct VarType ) );
+    res->Instrs = GenInstr( NULL, "li", "$v0", "5", NULL );
+    AppendSeq( res->Instrs, GenInstr( NULL, "syscall", NULL, NULL, NULL ) );
+    AppendSeq( res->Instrs, GenInstr( NULL, "move",
+                                TmpRegName( res->Reg ),
+                                "$v0", NULL ) );
+    return res;
 }
 
 struct ExprRes*
-doPow( struct ExprRes* base, struct ExprRes* pow )
+doNegateInt( struct ExprRes* Expr )
 {
-    if ( base->Type->Type != T_INT || pow->Type->Type != T_INT
-            || base->Type->isRef || pow->Type->isRef)
-    {
-        typeMismatch();
-    }
-    struct InstrSeq* instrs;
-    int reg_pow = AvailTmpReg();
-    int reg_cur = AvailTmpReg();
-    char* s_label = GenLabel();
-    char* e_label = GenLabel();
-
-    instrs = GenInstr( NULL, "move", TmpRegName( reg_pow ), "$0", NULL );
-    AppendSeq( instrs, GenInstr( NULL, "addi", TmpRegName( reg_cur ), "$0", "1" ) );
-    AppendSeq( instrs, GenInstr( NULL, "beq", TmpRegName( pow->Reg ), "$0", e_label ) );
-    AppendSeq( instrs, GenInstr( s_label, NULL, NULL, NULL, NULL ) );
-    AppendSeq( instrs, GenInstr( NULL, "mul", TmpRegName( reg_cur ),
-                           TmpRegName( reg_cur ),
-                           TmpRegName( base->Reg ) ) );
-    AppendSeq( instrs, GenInstr( NULL, "addi", TmpRegName( reg_pow ),
-                           TmpRegName( reg_pow ),
-                           "1" ) );
-    AppendSeq( instrs, GenInstr( NULL, "blt", TmpRegName( reg_pow ),
-                           TmpRegName( pow->Reg ), s_label ) );
-    AppendSeq( instrs, GenInstr( e_label, NULL, NULL, NULL, NULL ) );
-
-    AppendSeq( base->Instrs, pow->Instrs );
-    AppendSeq( base->Instrs, instrs );
-    ReleaseTmpReg( base->Reg );
-    ReleaseTmpReg( pow->Reg );
-    ReleaseTmpReg( reg_pow );
-    base->Reg = reg_cur;
-    free( s_label );
-    free( e_label );
-    free( pow->Type );
-    free( pow );
-    return base;
+    doDecArg(Expr);
+    return doCall("INTERNALNegateInt");
 }
 
 struct ExprRes*
-doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op )
+doPowInt( struct ExprRes* base, struct ExprRes* pow )
 {
-    if ( Res1->Type->Type != T_INT || Res2->Type->Type != T_INT 
-            || Res1->Type->isRef || Res2->Type->isRef)
-    {
-        typeMismatch();
-    }
+    doDecArg(base);
+    doDecArg(pow);
+    return doCall("INTERNALPowInt");
+}
+
+struct ExprRes*
+doArithInt( struct ExprRes* Res1, struct ExprRes* Res2, char op )
+{
     int reg = AvailTmpReg();
     char* opc;
 
@@ -129,14 +94,8 @@ doPrintInt( struct ExprRes* Expr )
 }
 
 struct ExprRes*
-doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op )
+doCompInt( struct ExprRes* Res1, struct ExprRes* Res2, int op )
 {
-    if ( Res1->Type->Type != T_INT || Res2->Type->Type != T_INT 
-            || Res1->Type->isRef || Res2->Type->isRef)
-    {
-        typeMismatch();
-    }
-
     struct InstrSeq* instrs;
     char* f_label = GenLabel();
     char* t_label = GenLabel();

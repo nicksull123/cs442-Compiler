@@ -15,6 +15,9 @@ extern struct SymTab* funcTab;
 extern struct TabList* tabList;
 extern struct ArgList *argList;
 extern struct StrLitList* strList;
+extern unsigned char libclite_cl[];
+extern unsigned int libclite_cl_len;
+extern int parseStdLib;
 extern int paramPos;
 extern int argPos;
 extern int sPos;
@@ -24,7 +27,6 @@ extern int sPos;
 #define T_INT 1
 #define T_STR 2
 #define T_FLOAT 3
-#define T_ANY 4
 
 #define V_GBL 0
 #define V_LOC 1
@@ -95,6 +97,7 @@ struct IdAddr
 };
 
 /* Semantics Actions */
+int getLexInput();
 void doDeclare( char* name, struct VarType *type, int arg, int size );
 void doPushDecs();
 void doPopDecs();
@@ -108,6 +111,10 @@ struct InstrSeq* doPrint( struct ExprRes* Expr );
 struct InstrSeq* doPrintLn();
 struct InstrSeq* doPrintSp( struct ExprRes* Expr );
 struct InstrSeq* doRead( struct IdAddr *addr );
+struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
+struct ExprRes* doPow( struct ExprRes* base, struct ExprRes* pow );
+struct ExprRes* doNegate( struct ExprRes* Expr );
 void Finish( struct InstrSeq* Code );
 
 /* Control Semantics Actions */
@@ -130,12 +137,24 @@ struct ExprRes* doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
 struct InstrSeq* doPrintBool( struct ExprRes* Expr );
 
 /* Int Semantics Actions */
-struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
-struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
-struct ExprRes* doPow( struct ExprRes* base, struct ExprRes* pow );
+struct ExprRes* doCompInt( struct ExprRes* Res1, struct ExprRes* Res2, int op );
+struct ExprRes* doArithInt( struct ExprRes* Res1, struct ExprRes* Res2, char op );
+struct ExprRes* doPowInt( struct ExprRes* base, struct ExprRes* pow );
 struct ExprRes* doIntLit( int val );
-struct ExprRes* doNegate( struct ExprRes* Expr );
+struct ExprRes* doNegateInt( struct ExprRes* Expr );
 struct InstrSeq* doPrintInt( struct ExprRes* Expr );
+struct ExprRes* doReadInt( struct IdAddr *addr );
+
+/* Float Semantics Actions */
+struct ExprRes *doIntToFloat( struct ExprRes *Expr );
+struct ExprRes *doFloatToInt( struct ExprRes *Expr );
+struct ExprRes *doFloatLit( float val );
+struct ExprRes *doArithFloat( struct ExprRes *Res1, struct ExprRes *Res2, char op );
+struct ExprRes *doNegateFloat( struct ExprRes *Expr);
+struct InstrSeq *doPrintFloat( struct ExprRes *Expr );
+struct ExprRes *doCompFloat( struct ExprRes *Res1, struct ExprRes *Res2, int op );
+struct ExprRes* doReadFloat( struct IdAddr *addr );
+struct ExprRes* doPowFloat( struct ExprRes* base, struct ExprRes* pow );
 
 /* Str Semantics Actions */
 struct InstrSeq* doPrintStr( struct ExprRes* Expr );
@@ -145,6 +164,3 @@ struct ExprRes* doStrLit( char* str );
 struct IdAddr *doIdAddr(char *name, int SZOff);
 struct IdAddr *doDeRef(struct IdAddr *addr, struct ExprRes *offset);
 struct ExprRes *doAddr(struct IdAddr *addr);
-
-
-

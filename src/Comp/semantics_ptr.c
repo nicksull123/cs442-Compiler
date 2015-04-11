@@ -8,6 +8,7 @@ doIdAddr( char* name, int SZOff )
     {
         WriteIndicator( GetCurrentColumn() );
         WriteMessage( "Variable Undeclared" );
+        exit(1);
     }
     struct IdAddr* nAddr = malloc( sizeof( struct IdAddr ) );
     nAddr->Addr = malloc( sizeof( struct ExprRes ) );

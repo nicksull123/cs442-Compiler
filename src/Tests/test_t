@@ -1,0 +1,15 @@
+int
+main()
+{
+    float i;
+    float j;
+    int k;
+
+    i = 2.5;
+    j = i * 2;
+    print(j ^ i, "\n");
+    print(i / 2, "\n");
+    print((2.5 + 3) / 2, "\n");
+    print(int(10.2), "\n");
+    print(float(5), "\n");
+}

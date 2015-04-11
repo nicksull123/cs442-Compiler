@@ -1,22 +1,20 @@
 %{
-#include "../SymTab/SymTab.h"
-#include "../IOMngr/IOMngr.h"
+#include "semantics.h"
 #include "y.tab.h"
 
 #define YY_INPUT( buf, result, max_size )                      \
     {                                                          \
-        int c = GetSourceChar();                               \
+        int c = getLexInput();                                 \
         result = ( c == EOF ) ? YY_NULL : ( buf[ 0 ] = c, 1 ); \
     }
 
 %}
 
-
 letter [A-Za-z]
 digit [0-9]
 
 %%
-func                            { return Func;}
+
 return                          {return Return;}
 true                            {return True;}
 false                           {return False;}
@@ -34,7 +32,11 @@ read                            {return Read;};
                                     yylval.string = strdup(yytext);
                                     return Id;
                                 }
-{digit}{digit}*                 {
+{digit}+\.{digit}+              {
+                                    yylval.fval = atof(yytext);
+                                    return FloatLit;
+                                }
+{digit}+                        {
                                     yylval.val = atoi(yytext);
                                     return IntLit;
                                 }
