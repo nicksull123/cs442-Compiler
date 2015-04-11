@@ -1,29 +1,22 @@
 #pragma once
 
-#include <stdbool.h>  
-#include <stdlib.h>  
-#include <stdio.h>                                                  
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
-#define MAXLINE  1024                        
+#define MAXLINE 1024
 
-bool 
-OpenFiles(const char *ASourceName, const char *AListingName);  
+bool OpenFiles(const char *ASourceName, const char *AListingName);
 
-void 
-CloseFiles();    
+void CloseFiles();
 
-char 
-GetSourceChar();  
+char GetSourceChar();
 
-void 
-WriteIndicator(int AColumn);    
+void WriteIndicator(int AColumn);
 
-void 
-WriteMessage(const char *AMessage);  
+void WriteMessage(const char *AMessage);
 
-int 
-GetCurrentLine();  
+int GetCurrentLine();
 
-int 
-GetCurrentColumn();
+int GetCurrentColumn();

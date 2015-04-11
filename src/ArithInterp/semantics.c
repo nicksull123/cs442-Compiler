@@ -7,7 +7,7 @@ printSymTab()
 {
     struct SymEntry *entry = FirstEntry(table);
     printf("%20s\t%10s\n", "Variable", "Value");
-    while(entry)
+    while (entry)
     {
         printf("%20s\t%10d\n", GetName(entry), getVal((char *)GetName(entry)));
         entry = NextEntry(table, entry);
@@ -28,7 +28,7 @@ int32_t
 getVal(char *name)
 {
     struct SymEntry *entry = FindName(table, name);
-    if(entry)
+    if (entry)
     {
         return *((int32_t *)GetAttr(entry));
     }

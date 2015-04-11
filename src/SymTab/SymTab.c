@@ -7,7 +7,7 @@
 #define PRIME3 674506111
 #define PRIME4 141650963
 #define rotl32(x, r) ((x << r) | (x >> (32 - r)))
-#define IDX(hash, pSize) hash & ((1 << pSize) - 1)
+#define IDX(hash, pSize) hash &((1 << pSize) - 1)
 
 static uint32_t
 hash(const char *name)
@@ -63,9 +63,7 @@ DestroySymTab(struct SymTab *ATable)
 }
 
 bool
-EnterName(struct SymTab *ATable,
-          const char *Name,
-          struct SymEntry **AnEntry)
+EnterName(struct SymTab *ATable, const char *Name, struct SymEntry **AnEntry)
 {
     struct SymEntry *nEntry = FindName(ATable, Name);
     if (nEntry)

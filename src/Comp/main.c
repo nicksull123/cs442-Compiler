@@ -5,7 +5,7 @@
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
 
-struct SymTab* curTab;
+struct SymTab *curTab;
 struct SymTab *funcTab;
 struct StrLitList *strList;
 struct TabList *tabList;
@@ -14,9 +14,10 @@ struct ArgList *argList;
 int sPos = 0;
 int argPos = 0;
 int paramPos = 0;
-FILE* aFile;
+FILE *aFile;
 
-int main(int argc, char* argv[])
+int
+main(int argc, char *argv[])
 {
     tabList = NULL;
     argList = NULL;

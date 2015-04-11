@@ -10,11 +10,11 @@
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
 
-extern struct SymTab* curTab;
-extern struct SymTab* funcTab;
-extern struct TabList* tabList;
+extern struct SymTab *curTab;
+extern struct SymTab *funcTab;
+extern struct TabList *tabList;
 extern struct ArgList *argList;
-extern struct StrLitList* strList;
+extern struct StrLitList *strList;
 extern unsigned char libclite_cl[];
 extern unsigned int libclite_cl_len;
 extern int parseStdLib;
@@ -65,22 +65,22 @@ struct FuncType
 
 struct TabList
 {
-    struct SymTab* Tab;
-    struct TabList* Next;
+    struct SymTab *Tab;
+    struct TabList *Next;
 };
 
 struct ExprRes
 {
     int Reg;
     struct VarType *Type;
-    struct InstrSeq* Instrs;
+    struct InstrSeq *Instrs;
 };
 
 struct StrLitList
 {
-    char* label;
-    char* val;
-    struct StrLitList* next;
+    char *label;
+    char *val;
+    struct StrLitList *next;
 };
 
 struct ArgList
@@ -98,67 +98,70 @@ struct IdAddr
 
 /* Semantics Actions */
 int getLexInput();
-void doDeclare( char* name, struct VarType *type, int arg, int size );
+void doDeclare(char *name, struct VarType *type, int arg, int size);
 void doPushDecs();
 void doPopDecs();
 void typeMismatch();
 struct VarType *doVarType(int type);
-struct VarType* doFindVar( char* name );
-struct ExprRes* doRval( struct IdAddr *addr );
-struct InstrSeq* doAssign( struct IdAddr *addr, struct ExprRes* Expr, int inverse);
-struct InstrSeq* doPrintList( struct ExprRes* Res1, struct InstrSeq* instrs2 );
-struct InstrSeq* doPrint( struct ExprRes* Expr );
-struct InstrSeq* doPrintLn();
-struct InstrSeq* doPrintSp( struct ExprRes* Expr );
-struct InstrSeq* doRead( struct IdAddr *addr );
-struct ExprRes* doComp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
-struct ExprRes* doArith( struct ExprRes* Res1, struct ExprRes* Res2, char op );
-struct ExprRes* doPow( struct ExprRes* base, struct ExprRes* pow );
-struct ExprRes* doNegate( struct ExprRes* Expr );
-void Finish( struct InstrSeq* Code );
+struct VarType *doFindVar(char *name);
+struct ExprRes *doRval(struct IdAddr *addr);
+struct InstrSeq *
+doAssign(struct IdAddr *addr, struct ExprRes *Expr, int inverse);
+struct InstrSeq *doPrintList(struct ExprRes *Res1, struct InstrSeq *instrs2);
+struct InstrSeq *doPrint(struct ExprRes *Expr);
+struct InstrSeq *doPrintLn();
+struct InstrSeq *doPrintSp(struct ExprRes *Expr);
+struct InstrSeq *doRead(struct IdAddr *addr);
+struct ExprRes *doComp(struct ExprRes *Res1, struct ExprRes *Res2, int op);
+struct ExprRes *doArith(struct ExprRes *Res1, struct ExprRes *Res2, char op);
+struct ExprRes *doPow(struct ExprRes *base, struct ExprRes *pow);
+struct ExprRes *doNegate(struct ExprRes *Expr);
+void Finish(struct InstrSeq *Code);
 
 /* Control Semantics Actions */
-struct InstrSeq* doWhile( struct ExprRes* Expr, struct InstrSeq* code );
-struct InstrSeq* doIfElse( struct ExprRes* Expr, struct InstrSeq* iCode, struct InstrSeq* eCode );
-struct InstrSeq* doIf( struct ExprRes* Expr, struct InstrSeq* code );
+struct InstrSeq *doWhile(struct ExprRes *Expr, struct InstrSeq *code);
+struct InstrSeq *
+doIfElse(struct ExprRes *Expr, struct InstrSeq *iCode, struct InstrSeq *eCode);
+struct InstrSeq *doIf(struct ExprRes *Expr, struct InstrSeq *code);
 
 /* Functions Semantics Actions */
-struct InstrSeq* doReturn( struct ExprRes* Expr );
-struct ExprRes* doCall( char* name );
-void doFuncInit( char *name, struct VarType *type );
-struct InstrSeq* doDecFunc( char* name, struct InstrSeq* code );
-struct InstrSeq* doFuncInstrs( struct ExprRes* res );
-void doDecArg( struct ExprRes *res );
+struct InstrSeq *doReturn(struct ExprRes *Expr);
+struct ExprRes *doCall(char *name);
+void doFuncInit(char *name, struct VarType *type);
+struct InstrSeq *doDecFunc(char *name, struct InstrSeq *code);
+struct InstrSeq *doFuncInstrs(struct ExprRes *res);
+void doDecArg(struct ExprRes *res);
 
 /* Bool Semantics Actions */
-struct ExprRes* doBoolLit( int b );
-struct ExprRes* doNot( struct ExprRes* Expr );
-struct ExprRes* doBoolOp( struct ExprRes* Res1, struct ExprRes* Res2, int op );
-struct InstrSeq* doPrintBool( struct ExprRes* Expr );
+struct ExprRes *doBoolLit(int b);
+struct ExprRes *doNot(struct ExprRes *Expr);
+struct ExprRes *doBoolOp(struct ExprRes *Res1, struct ExprRes *Res2, int op);
+struct InstrSeq *doPrintBool(struct ExprRes *Expr);
 
 /* Int Semantics Actions */
-struct ExprRes* doCompInt( struct ExprRes* Res1, struct ExprRes* Res2, int op );
-struct ExprRes* doArithInt( struct ExprRes* Res1, struct ExprRes* Res2, char op );
-struct ExprRes* doPowInt( struct ExprRes* base, struct ExprRes* pow );
-struct ExprRes* doIntLit( int val );
-struct ExprRes* doNegateInt( struct ExprRes* Expr );
-struct InstrSeq* doPrintInt( struct ExprRes* Expr );
-struct ExprRes* doReadInt( struct IdAddr *addr );
+struct ExprRes *doCompInt(struct ExprRes *Res1, struct ExprRes *Res2, int op);
+struct ExprRes *doArithInt(struct ExprRes *Res1, struct ExprRes *Res2, char op);
+struct ExprRes *doPowInt(struct ExprRes *base, struct ExprRes *pow);
+struct ExprRes *doIntLit(int val);
+struct ExprRes *doNegateInt(struct ExprRes *Expr);
+struct InstrSeq *doPrintInt(struct ExprRes *Expr);
+struct ExprRes *doReadInt(struct IdAddr *addr);
 
 /* Float Semantics Actions */
-struct ExprRes *doIntToFloat( struct ExprRes *Expr );
-struct ExprRes *doFloatToInt( struct ExprRes *Expr );
-struct ExprRes *doFloatLit( float val );
-struct ExprRes *doArithFloat( struct ExprRes *Res1, struct ExprRes *Res2, char op );
-struct ExprRes *doNegateFloat( struct ExprRes *Expr);
-struct InstrSeq *doPrintFloat( struct ExprRes *Expr );
-struct ExprRes *doCompFloat( struct ExprRes *Res1, struct ExprRes *Res2, int op );
-struct ExprRes* doReadFloat( struct IdAddr *addr );
-struct ExprRes* doPowFloat( struct ExprRes* base, struct ExprRes* pow );
+struct ExprRes *doIntToFloat(struct ExprRes *Expr);
+struct ExprRes *doFloatToInt(struct ExprRes *Expr);
+struct ExprRes *doFloatLit(float val);
+struct ExprRes *
+doArithFloat(struct ExprRes *Res1, struct ExprRes *Res2, char op);
+struct ExprRes *doNegateFloat(struct ExprRes *Expr);
+struct InstrSeq *doPrintFloat(struct ExprRes *Expr);
+struct ExprRes *doCompFloat(struct ExprRes *Res1, struct ExprRes *Res2, int op);
+struct ExprRes *doReadFloat(struct IdAddr *addr);
+struct ExprRes *doPowFloat(struct ExprRes *base, struct ExprRes *pow);
 
 /* Str Semantics Actions */
-struct InstrSeq* doPrintStr( struct ExprRes* Expr );
-struct ExprRes* doStrLit( char* str );
+struct InstrSeq *doPrintStr(struct ExprRes *Expr);
+struct ExprRes *doStrLit(char *str);
 
 /* Pointer Semantics Actions */
 struct IdAddr *doIdAddr(char *name, int SZOff);
