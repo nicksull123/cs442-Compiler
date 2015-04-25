@@ -78,6 +78,10 @@ doCall(char *name)
     struct ExprRes *ret = malloc(sizeof(struct ExprRes));
     struct FuncType *fType = (struct FuncType *)GetAttr(entry);
 
+    int SOff = RegStackSize() + fType->VarRsrv;
+    struct InstrSeq *saveInstrs = SaveSeq();
+    struct InstrSeq *restoreInstrs = RestoreSeq();
+
     // Swap variable context and store args
     struct InstrSeq *argInstrs = NULL;
     struct SymTab *tempTab = tabList->Tab;
@@ -86,7 +90,7 @@ doCall(char *name)
     while (aEnt)
     {
         argInstrs = AppendSeq(
-            argInstrs, doAssign(doIdAddr(strdup(findArgAt(aEnt->ArgPos)), 1),
+            argInstrs, doAssign(doIdAddr(strdup(findArgAt(aEnt->ArgPos)), SOff),
                            aEnt->Res, 1));
         aEnt = aEnt->Next;
     }
@@ -96,8 +100,8 @@ doCall(char *name)
         struct VarType *vType = (struct VarType *)GetAttr(entry);
         if (vType->Shim)
         {
-            struct IdAddr *ptrAddr = doIdAddr(strdup(GetName(entry)), 1);
-            struct IdAddr *shimAddr = doIdAddr(strdup(vType->Shim), 1);
+            struct IdAddr *ptrAddr = doIdAddr(strdup(GetName(entry)), SOff);
+            struct IdAddr *shimAddr = doIdAddr(strdup(vType->Shim), SOff);
             argInstrs
                 = AppendSeq(argInstrs, doAssign(ptrAddr, shimAddr->Addr, 0));
         }
@@ -107,15 +111,13 @@ doCall(char *name)
 
     ret->Type = doVarType(fType->Type);
     ret->Reg = AvailTmpReg();
-    ret->Instrs = SaveSeq();
-    AppendSeq(
-        ret->Instrs, GenInstr(NULL, "subu", "$s0", "$s0", Imm(fType->VarRsrv)));
-    AppendSeq(ret->Instrs, argInstrs);
-    AppendSeq(ret->Instrs, GenInstr(NULL, "move", "$sp", "$s0", NULL));
+    ret->Instrs = argInstrs;
+    ret->Instrs = AppendSeq(ret->Instrs, saveInstrs);
+    AppendSeq(ret->Instrs, GenInstr(NULL, "subu", "$sp", "$sp", Imm(fType->VarRsrv)));
     AppendSeq(ret->Instrs, GenInstr(NULL, "jal", buf, NULL, NULL));
     AppendSeq(
         ret->Instrs, GenInstr(NULL, "addu", "$sp", "$sp", Imm(fType->VarRsrv)));
-    AppendSeq(ret->Instrs, RestoreSeq());
+    AppendSeq(ret->Instrs, restoreInstrs);
     AppendSeq(
         ret->Instrs, GenInstr(NULL, "move", TmpRegName(ret->Reg), "$v0", NULL));
     freeArgList();

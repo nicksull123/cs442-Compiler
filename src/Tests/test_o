@@ -13,6 +13,8 @@ genbool()
 int
 main()
 {
+    bool i;
     print("Expected:", 5, true, "\n");
-    print("Result:  ", genint(), genbool(), "\n");
+    print(genint(), genbool(), "\n");
 }
+

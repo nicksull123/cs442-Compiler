@@ -1,0 +1,13 @@
+int
+times2(int i)
+{
+    return i * 2;
+}
+
+int
+main()
+{
+    float y;
+    y = 2.5;
+    print(times2(times2(1)) * y);
+}

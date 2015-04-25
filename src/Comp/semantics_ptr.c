@@ -24,17 +24,16 @@ doIdAddr(char *name, int SZOff)
     }
     else
     {
+        nAddr->Addr->Instrs = AppendSeq(nAddr->Addr->Instrs,
+            GenInstr(NULL, "addi", TmpRegName(nAddr->Addr->Reg), "$sp",
+                                            Imm(vType->SPos)));
         if (SZOff)
         {
+            char buf[1024];
+            snprintf(buf, 1024, "-%d", SZOff);
             nAddr->Addr->Instrs = AppendSeq(nAddr->Addr->Instrs,
-                GenInstr(NULL, "addi", TmpRegName(nAddr->Addr->Reg), "$s0",
-                                                Imm(vType->SPos)));
-        }
-        else
-        {
-            nAddr->Addr->Instrs = AppendSeq(nAddr->Addr->Instrs,
-                GenInstr(NULL, "addi", TmpRegName(nAddr->Addr->Reg), "$sp",
-                                                Imm(vType->SPos)));
+                GenInstr(NULL, "addi", TmpRegName(nAddr->Addr->Reg), TmpRegName(nAddr->Addr->Reg),
+                                                buf));
         }
     }
     return nAddr;

@@ -153,6 +153,20 @@ ResetAllTmpReg()
     return;
 }
 
+int
+RegStackSize()
+{
+    int scnt = 0;
+    for(int i = 0; i < MAXREG; i++)
+    {
+        if(!Registers[i].Free)
+        {
+            scnt++;
+        }
+    }
+    return scnt * 4;
+}
+
 struct InstrSeq *
 SaveSeq()
 {
@@ -166,14 +180,14 @@ SaveSeq()
     {
         if (!Registers[i].Free)
         {
-            sprintf(addr, "%d($s0)", scnt * 4);
+            sprintf(addr, "%d($sp)", scnt * 4);
             scnt++;
             save = AppendSeq(
                 save, GenInstr(NULL, "sw", TmpRegName(i), addr, NULL));
         }
     }
     sprintf(offset, "%d", scnt * 4);
-    code = GenInstr(NULL, "subu", "$s0", "$sp", offset);
+    code = GenInstr(NULL, "subu", "$sp", "$sp", offset);
     AppendSeq(code, save);
 
     return code;
