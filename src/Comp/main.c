@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "y.tab.h"
-#include "Semantics.h"
-#include "CodeGen.h"
+#include "semantics.h"
+#include "codegen.h"
 #include "../SymTab/SymTab.h"
 #include "../IOMngr/IOMngr.h"
 

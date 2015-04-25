@@ -3,7 +3,7 @@ CFLAGS=-O3
 
 ODIR=../../bin/SymTab
 
-LIBS=
+LIBS=-lm
 DEPS=SymTab.h
 _OBJ=SymTab.o driver.o
 

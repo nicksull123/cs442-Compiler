@@ -6,7 +6,7 @@ vpath %.o $(OPATHS)
 
 ODIR=../../bin/ArithInterp
 
-LIBS=
+LIBS=-lm
 OLINK=SymTab.o IOMngr.o
 DEPS=semantics.h arithLex.l arithYacc.y arithLex.l
 _OBJ=main.o semantics.o y.tab.o lex.yy.o

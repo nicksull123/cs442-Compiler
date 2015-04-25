@@ -6,7 +6,7 @@ vpath %.o $(OPATHS)
 
 ODIR=../../bin/Comp
 
-LIBS=
+LIBS=-lm
 OLINK=SymTab.o IOMngr.o
 DEPS=semantics.h ExprEval.y lex1.l
 _OBJ=y.tab.o main.o semantics.o lex.yy.o codegen.o semantics_bool.o semantics_int.o semantics_str.o semantics_ctrl.o semantics_funcs.o semantics_ptr.o semantics_float.o libclite.o
