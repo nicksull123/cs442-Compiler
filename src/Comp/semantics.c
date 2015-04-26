@@ -191,6 +191,10 @@ doAssign(struct IdAddr *addr, struct ExprRes *Expr, int inverse)
 {
     struct InstrSeq *code;
     struct ExprRes *addrExpr = addr->Addr;
+    if(Expr->Type->Type == T_VOID)
+    {
+        Expr->Type->Type = addrExpr->Type->Type;
+    }
     if (addrExpr->Type->Type != Expr->Type->Type
         || addrExpr->Type->isRef != Expr->Type->isRef)
     {

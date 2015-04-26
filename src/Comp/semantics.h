@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <strings.h>
+#include <string.h>
 #include <stdlib.h>
 #include "codegen.h"
 #include "../SymTab/SymTab.h"
@@ -27,6 +27,7 @@ extern int sPos;
 #define T_INT 1
 #define T_STR 2
 #define T_FLOAT 3
+#define T_VOID 4
 
 #define V_GBL 0
 #define V_LOC 1
@@ -58,7 +59,7 @@ struct VarType
 
 struct FuncType
 {
-    int Type;
+    struct VarType *Type;
     int VarRsrv;
     struct SymTab *Tab;
 };
@@ -167,3 +168,4 @@ struct ExprRes *doStrLit(char *str);
 struct IdAddr *doIdAddr(char *name, int SZOff);
 struct IdAddr *doDeRef(struct IdAddr *addr, struct ExprRes *offset);
 struct ExprRes *doAddr(struct IdAddr *addr);
+struct ExprRes *doSbrk(struct ExprRes *size);

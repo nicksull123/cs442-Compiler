@@ -1,0 +1,13 @@
+int
+main()
+{
+    int *p;
+    float *q;
+    p = malloc(12);
+    q = malloc(4);
+    p[0] = 5;
+    p[1] = 2;
+    p[2] = 1;
+    *q = 2.25;
+    print(p[0], p[1], p[2], *q, "\n");
+}

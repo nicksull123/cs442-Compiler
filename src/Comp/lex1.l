@@ -15,6 +15,7 @@ digit [0-9]
 
 %%
 
+sbrk                            {return Sbrk;}
 return                          {return Return;}
 true                            {return True;}
 false                           {return False;}
@@ -23,6 +24,7 @@ else                            {return ELSE;}
 int                             {return Int;}
 bool                            {return Bool;}
 float                           {return Float;}
+void                            {return Void;}
 while                           {return While;}
 print                           {return Write;}
 println                         {return Writeln;}

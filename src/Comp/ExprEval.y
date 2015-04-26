@@ -53,6 +53,7 @@ extern struct SymEntry *entry;
 %type <InstrSeq> FuncSeq
 %type <InstrSeq> FuncDec
 
+%token Sbrk
 %token Return
 %token Id 
 %token IntLit   
@@ -61,6 +62,7 @@ extern struct SymEntry *entry;
 %token Bool
 %token Float
 %token Str
+%token Void
 %token NOT
 %token OR
 %token AND
@@ -146,6 +148,7 @@ Factor          :   IntLit                                                  {$$ 
                 |   False                                                   {$$ = doBoolLit(B_FALSE);};
                 |   Str                                                     {$$ = doStrLit($1);};
                 |   FuncCall                                                {$$ = $1;};
+                |   Sbrk '(' AExpr ')'                                      {$$ = doSbrk($3);};
                 |   Float '(' AExpr ')'                                     {$$ = doIntToFloat($3);};
                 |   Int '(' AExpr ')'                                       {$$ = doFloatToInt($3);};
 FuncCall        :   Id '(' Args  ')'                                        {$$ = doCall($1);};
@@ -168,6 +171,7 @@ Type            :   Ty '*'                                                  {
 Ty              :   Bool                                                    {$$ = doVarType(T_BOOL);};
                 |   Int                                                     {$$ = doVarType(T_INT);};
                 |   Float                                                   {$$ = doVarType(T_FLOAT);};
+                |   Void                                                    {$$ = doVarType(T_VOID);};
  
 %%
 

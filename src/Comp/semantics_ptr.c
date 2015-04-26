@@ -84,3 +84,21 @@ doAddr(struct IdAddr *addr)
     free(addr);
     return addrExpr;
 }
+
+struct ExprRes *
+doSbrk(struct ExprRes *size)
+{
+    if(size->Type->isRef || size->Type->Type != T_INT)
+    {
+        typeMismatch();
+    }
+    AppendSeq(size->Instrs, GenInstr(NULL, "move", "$a0", 
+                TmpRegName(size->Reg), NULL));
+    AppendSeq(size->Instrs, GenInstr(NULL, "li", "$v0", "9", NULL));
+    AppendSeq(size->Instrs, GenInstr(NULL, "syscall", NULL, NULL, NULL));   
+    AppendSeq(size->Instrs, GenInstr(NULL, "move", TmpRegName(size->Reg),
+                "$v0", NULL));
+    size->Type->isRef = 1;
+    size->Type->Type = T_VOID;
+    return size;
+}

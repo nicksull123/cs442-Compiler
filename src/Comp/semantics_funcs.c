@@ -6,7 +6,8 @@ struct InstrSeq *
 doReturn(struct ExprRes *Expr)
 {
     struct FuncType *fType = GetAttr(FindName(funcTab, curFuncName));
-    if (fType->Type != Expr->Type->Type || Expr->Type->isRef)
+    if (fType->Type->Type != Expr->Type->Type 
+            || Expr->Type->isRef != fType->Type->isRef)
     {
         typeMismatch();
     }
@@ -109,7 +110,8 @@ doCall(char *name)
     }
     tabList->Tab = tempTab;
 
-    ret->Type = doVarType(fType->Type);
+    ret->Type = malloc(sizeof(struct VarType));
+    memcpy(ret->Type, fType->Type, sizeof(struct VarType));
     ret->Reg = AvailTmpReg();
     ret->Instrs = argInstrs;
     ret->Instrs = AppendSeq(ret->Instrs, saveInstrs);
@@ -140,7 +142,7 @@ doFuncInit(char *name, struct VarType *type)
     EnterName(funcTab, buf, &entry);
     curFuncName = (char *)GetName(entry);
     fType = malloc(sizeof(struct FuncType));
-    fType->Type = type->Type;
+    fType->Type = type;
     fType->VarRsrv = sPos;
     fType->Tab = tabList->Tab;
     SetAttr(entry, (void *)fType);

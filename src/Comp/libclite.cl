@@ -1,3 +1,9 @@
+void *
+malloc(int size)
+{
+    return sbrk(size);
+}
+
 int
 INTERNALPrintBool(bool val)
 {
@@ -70,4 +76,3 @@ INTERNALNegateFloat(float val)
 {
     return 0 - val;
 }
-
