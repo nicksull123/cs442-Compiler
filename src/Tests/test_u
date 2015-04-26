@@ -2,8 +2,10 @@ int
 main()
 {
     int *p;
+    int i;
     float *q;
-    p = malloc(12);
+    i = 3 * 4;
+    p = malloc(i);
     q = malloc(4);
     p[0] = 5;
     p[1] = 2;
