@@ -143,7 +143,7 @@ Factor          :   IntLit                                                  {$$ 
                 |   '&' IdAddr                                              {$$ = doAddr($2);};
                 |   IdAddr                                                  {$$ = doRval($1); };
                 |   '(' AExpr ')'                                           {$$ = $2; };
-                |   NOT AExpr                                               {$$ = doNot($2);};
+                |   NOT Factor                                               {$$ = doNot($2);};
                 |   True                                                    {$$ = doBoolLit(B_TRUE);};
                 |   False                                                   {$$ = doBoolLit(B_FALSE);};
                 |   Str                                                     {$$ = doStrLit($1);};

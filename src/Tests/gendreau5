@@ -43,7 +43,7 @@ b1 = false;
 b2 = true;
 
 print("DeMorgans  ");
-print (b1, b2, !(b1 && b2), (!b1) || (!b2), !(b1 || b2), (!b1) && (!b2));
+print (b1, b2, !(b1 && b2), !b1 || !b2, !(b1 || b2), !b1 && !b2);
 print("\n");
     
 a = 10;
