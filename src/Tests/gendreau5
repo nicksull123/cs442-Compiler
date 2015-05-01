@@ -1,0 +1,55 @@
+int a;
+int q;
+int c;
+int d;
+int e;
+int x;
+int y;
+int z;
+
+bool b1;
+bool b2;
+bool b3;
+bool b4;
+
+int main() {
+
+a = 2;
+q = a ^ 3 ^ a;
+c = -q + -a;
+d = q % 7;
+e = (a+d)^(q-510);        
+print("a b c d e   ");
+print(a, q, c, d, e);
+print("\n");
+
+x = 2*a;
+y = d+a-e;
+z = d*2;
+
+print("x y z  ");
+print(x, y, z);
+print("\n");
+
+b1 = false;
+
+b2 = (2*a > d+a-e && q > d*2  ) || b1;
+
+print(b1, b2, 2*a > d+a-e && q > d*2);
+print("\n");
+
+b1 = false;
+
+b2 = true;
+
+print("DeMorgans  ");
+print (b1, b2, !(b1 && b2), (!b1) || (!b2), !(b1 || b2), (!b1) && (!b2));
+print("\n");
+    
+a = 10;
+q = 20;
+    
+print(a < q, a <= q, a == q, a >= q, a > q, a != q);
+
+}
+

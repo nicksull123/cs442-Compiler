@@ -1,0 +1,78 @@
+
+bool binSearch(int[] x, int size, int key) {
+	int high;
+	int low;
+	int mid;
+
+	low = 0;
+	high = size -1;
+	while (low < high) {
+		mid = (high+low)/2;
+		if (x[mid] < key)
+        {
+			low = mid+1;
+        }
+		else
+        {
+			high = mid;
+        }
+	}
+	return low == high && x[low] == key;
+}
+
+void bubbleSort(int[] x, int size) {
+	int temp;
+	int j;
+	int k;
+	bool swapped;
+	k = size-1;
+	swapped = true;
+	while ( swapped) {
+		swapped = false;
+		j = 0;
+		while (j < k) {
+			if (x[j] > x[j+1]) {
+				temp = x[j];
+				x[j] = x[j+1];
+				x[j+1] = temp;
+				swapped = true;
+			}
+			j = j+1;
+		}
+		k = k-1;
+	}
+}
+
+int main() {
+	int[10] y;
+	int size;
+	int i;
+	int k;
+
+	print("Enter an integer between 1 and 10: ");
+	read(size);
+	i = 0;
+	while (i < size) {
+		print("Enter a positive integer: ");
+		read(y[i]);
+		i = i + 1;
+	}
+
+	bubbleSort(y, size);
+	i = 0;
+	print("The array sorted: ");
+	while (i < size) {
+		print(y[i]);
+		i = i + 1;
+	}
+	print("\n");
+
+	print("Enter a positive integer or 0 to quit: ");
+	read(k);
+	while (k != 0) {
+		print(binSearch(y, size, k), "\n");
+		print("Enter a positive integer or 0 to quit: ");
+		read(k);
+	}
+}
+		

@@ -115,9 +115,9 @@ RVarSeq         :   RVar ',' RVarSeq                                        {$$ 
 RVar            :   IdAddr                                                  {$$ = doRead($1);};
 PVarSeq         :   AExpr ',' PVarSeq                                       {$$ = doPrintList($1, $3);};
                 |   AExpr                                                   {$$ = doPrint($1);};
-AExpr           :   AExpr AND OExpr                                         {$$ = doBoolOp($1, $3, B_AND); };
+AExpr           :   AExpr OR OExpr                                          {$$ = doBoolOp($1, $3, B_OR); };
                 |   OExpr                                                   {$$ = $1;};
-OExpr           :   OExpr OR BHExpr                                         {$$ = doBoolOp($1, $3, B_OR); };
+OExpr           :   OExpr AND BHExpr                                        {$$ = doBoolOp($1, $3, B_AND); };
                 |   BHExpr                                                  {$$ = $1;};
 BHExpr          :   BHExpr EQ BExpr                                         {$$ = doComp($1, $3, B_EQ);};
                 |   BHExpr NE BExpr                                         {$$ = doComp($1, $3, B_NE);};
